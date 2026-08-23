@@ -9,8 +9,8 @@ export function AppHeader({role}:{role:"citizen"|"bbmp"|"collector"}){
   const {state,locale,setLocale,reset,tick}=useDemo(); const copy=uiCopy[locale];
   const {user,logout}=useAuth();
   return <header className="app-header" lang={locale==="kn"?"kn":"en"}>
-    <a href="/" className="app-brand"><span className="brand-mark" aria-hidden="true">BW</span><span><strong>Bengaluru Smart Waste</strong><small>{copy.header[role]}</small></span></a>
-    <div className="app-status"><span className="demo-badge">Synthetic live operations</span><span className="freshness"><i className="status-light"/>Tick {state.tick} · {new Date(state.now).toLocaleTimeString(locale==="kn"?"kn-IN":"en-IN",{hour:"2-digit",minute:"2-digit"})}</span></div>
+    <a href="/" className="app-brand"><span className="brand-mark" aria-hidden="true">BW</span><span><strong>Bengaluru Waste Coordination</strong><small>{copy.header[role]}</small></span></a>
+    <div className="app-status"><span className="demo-badge">Independent prototype · synthetic data</span><span className="freshness"><i className="status-light"/>Tick {state.tick} · {new Date(state.now).toLocaleTimeString(locale==="kn"?"kn-IN":"en-IN",{hour:"2-digit",minute:"2-digit"})}</span></div>
     <div className="app-actions">
       <button className="quiet-button" onClick={()=>setLocale(locale==="en"?"kn":"en")} aria-label="Switch language"><Languages size={17}/>{locale==="en"?"ಕನ್ನಡ":"English"}</button>
       {user

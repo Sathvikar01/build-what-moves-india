@@ -15,7 +15,7 @@ export const citizenCopy = {
       imagePrepare: "Could not prepare the image.",
     },
     reportDone: "Report submitted. Photo metadata was removed, location captured, ten priority factors calculated, and the route updated.",
-    noVehicle: "No collection vehicle is online right now. The BBMP control room has been notified.",
+    noVehicle: "No collection vehicle is online right now. The operations desk has been notified.",
     noBins: "No bin telemetry is available right now.",
     noEvents: "Your activity will appear here once you send a signal or report.",
     binFull: "Full — choose another bin", binOffline: "Sensor offline", binSpace: "Space available",
@@ -39,7 +39,7 @@ export const citizenCopy = {
       imagePrepare: "ಚಿತ್ರವನ್ನು ಸಿದ್ಧಪಡಿಸಲಾಗಲಿಲ್ಲ.",
     },
     reportDone: "ವರದಿ ಸಲ್ಲಿಸಲಾಗಿದೆ. ಫೋಟೊ ಮೆಟಾಡೇಟಾ ತೆಗೆದುಹಾಕಲಾಗಿದೆ, ಸ್ಥಳ ಸೆರೆಹಿಡಿಯಲಾಗಿದೆ, ಹತ್ತು ಆದ್ಯತಾ ಅಂಶಗಳನ್ನು ಲೆಕ್ಕಹಾಕಲಾಗಿದೆ.",
-    noVehicle: "ಪ್ರಸ್ತುತ ಯಾವುದೇ ಸಂಗ್ರಹ ವಾಹನ ಆನ್‌ಲೈನ್‌ನಲ್ಲಿ. ಬಿಬಿಎಂಪಿ ನಿಯಂತ್ರಣ ಕೊಠಡಿಗೆ ತಿಳಿಸಲಾಗಿದೆ.",
+    noVehicle: "ಪ್ರಸ್ತುತ ಯಾವುದೇ ಸಂಗ್ರಹ ವಾಹನ ಆನ್‌ಲೈನ್‌ನಲ್ಲಿ. ಕಾರ್ಯಾಚರಣೆ ತಂಡಕ್ಕೆ ತಿಳಿಸಲಾಗಿದೆ.",
     noBins: "ಪ್ರಸ್ತುತ ಬಿನ್ ಟೆಲಿಮೆಟ್ರಿ ಲಭ್ಯವಿಲ್ಲ.",
     noEvents: "ನೀವು ಸೂಚನೆ ಅಥವಾ ವರದಿ ಕಳುಹಿಸಿದ ನಂತರ ನಿಮ್ಮ ಚಟುವಟಿಕೆ ಇಲ್ಲಿ ಕಾಣಿಸುತ್ತದೆ.",
     binFull: "ತುಂಬಿದೆ — ಬೇರೆ ಬಿನ್ ಆರಿಸಿ", binOffline: "ಸೆನ್ಸಾರ್ ಆಫ್‌ಲೈನ್", binSpace: "ಜಾಗ ಲಭ್ಯ",
@@ -51,7 +51,7 @@ export const citizenCopy = {
 
 export const uiCopy = {
   en: {
-    header: { citizen: "Citizen service", bbmp: "BBMP Operations", collector: "Collector route" },
+    header: { citizen: "Citizen service", bbmp: "GBA / BSWML operations", collector: "Collector route" },
     signIn: "Sign in", signOut: "Sign out", hello: "Hi",
     landing: {
       badge: "Synthetic demo", dataLink: "Data & assumptions",
@@ -75,12 +75,12 @@ export const uiCopy = {
     login: {
       title: "Sign in", sub: "Demo sign-in — any name and a 10-digit phone number work. No real credentials are stored.",
       name: "Your name", phone: "Phone number", role: "Continue as",
-      roles: { citizen: "Citizen", bbmp: "BBMP staff", collector: "Collector" },
+      roles: { citizen: "Citizen", bbmp: "Operations staff", collector: "Collector" },
       submit: "Sign in", back: "Back to home",
       errors: { name: "Enter your name.", phone: "Enter a valid 10-digit phone number." },
     },
     bbmp: {
-      navTitle: "BBMP Operations", navSub: "GBA 2025 · Bengaluru East · Mahadevapura 28–50",
+      navTitle: "GBA / BSWML Operations", navSub: "Independent prototype · Bengaluru East · Mahadevapura 28–50",
       tabs: { overview: "Live overview", priority: "Priority queue", routes: "Routes lab", bins: "Smart bins", placement: "Placement lab" },
       live: "Live", cursor: "Cursor", seed: "deterministic seed",
       kpis: { open: "Open reports", urgent: "urgent or critical", demand: "Citizen demand", waiting: "signals waiting", vehicles: "Vehicles on route", ofTotal: "of 1 demo vehicle", bins: "Bins at 80%+", threshold: "threshold triggered" },
@@ -104,7 +104,7 @@ export const uiCopy = {
     },
   },
   kn: {
-    header: { citizen: "ನಾಗರಿಕ ಸೇವೆ", bbmp: "ಬಿಬಿಎಂಪಿ ಕಾರ್ಯಾಚರಣೆ", collector: "ಸಂಗ್ರಹ ಮಾರ್ಗ" },
+    header: { citizen: "ನಾಗರಿಕ ಸೇವೆ", bbmp: "GBA / BSWML ಕಾರ್ಯಾಚರಣೆ", collector: "ಸಂಗ್ರಹ ಮಾರ್ಗ" },
     signIn: "ಸೈನ್ ಇನ್", signOut: "ಸೈನ್ ಔಟ್", hello: "ನಮಸ್ಕಾರ",
     landing: {
       badge: "ಸಿಂಥೆಟಿಕ್ ಡೆಮೊ", dataLink: "ಡೇಟಾ ಮತ್ತು ಊಹೆಗಳು",
@@ -128,12 +128,12 @@ export const uiCopy = {
     login: {
       title: "ಸೈನ್ ಇನ್", sub: "ಡೆಮೊ ಸೈನ್-ಇನ್ — ಯಾವುದೇ ಹೆಸರು ಮತ್ತು 10 ಅಂಕಿಯ ದೂರವಾಣಿ ಸಂಖ್ಯೆ ಕಾರ್ಯನಿರ್ವಹಿಸುತ್ತದೆ. ಯಾವುದೇ ನಿಜವಾದ ರುಜುವಾತುಗಳನ್ನು ಸಂಗ್ರಹಿಸಲಾಗುವುದಿಲ್ಲ.",
       name: "ನಿಮ್ಮ ಹೆಸರು", phone: "ದೂರವಾಣಿ ಸಂಖ್ಯೆ", role: "ಹೀಗೆ ಮುಂದುವರಿಸಿ",
-      roles: { citizen: "ನಾಗರಿಕ", bbmp: "ಬಿಬಿಎಂಪಿ ಸಿಬ್ಬಂದಿ", collector: "ಸಂಗ್ರಹಕಾರ" },
+      roles: { citizen: "ನಾಗರಿಕ", bbmp: "ಕಾರ್ಯಾಚರಣೆ ಸಿಬ್ಬಂದಿ", collector: "ಸಂಗ್ರಹಕಾರ" },
       submit: "ಸೈನ್ ಇನ್", back: "ಮುಖಪುಟಕ್ಕೆ ಹಿಂತಿರುಗಿ",
       errors: { name: "ನಿಮ್ಮ ಹೆಸರನ್ನು ನಮೂದಿಸಿ.", phone: "ಮಾನ್ಯವಾದ 10 ಅಂಕಿಯ ದೂರವಾಣಿ ಸಂಖ್ಯೆಯನ್ನು ನಮೂದಿಸಿ." },
     },
     bbmp: {
-      navTitle: "ಬಿಬಿಎಂಪಿ ಕಾರ್ಯಾಚರಣೆ", navSub: "GBA 2025 · ಬೆಂಗಳೂರು ಪೂರ್ವ · ಮಹದೇವಪುರ 28–50",
+      navTitle: "GBA / BSWML ಕಾರ್ಯಾಚರಣೆ", navSub: "ಸ್ವತಂತ್ರ ಮಾದರಿ · ಬೆಂಗಳೂರು ಪೂರ್ವ · ಮಹದೇವಪುರ 28–50",
       tabs: { overview: "ನೇರ ಸ್ಥಿತಿ", priority: "ಆದ್ಯತಾ ಸರತಿ", routes: "ಮಾರ್ಗ ಲ್ಯಾಬ್", bins: "ಸ್ಮಾರ್ಟ್ ಬಿನ್‌ಗಳು", placement: "ಪ್ಲೇಸ್‌ಮೆಂಟ್ ಲ್ಯಾಬ್" },
       live: "ನೇರ", cursor: "ಕರ್ಸರ್", seed: "ನಿರ್ಧಾರಕ ಸೀಡ್",
       kpis: { open: "ತೆರೆದ ವರದಿಗಳು", urgent: "ತುರ್ತು ಅಥವಾ ಗಂಭೀರ", demand: "ನಾಗರಿಕ ಬೇಡಿಕೆ", waiting: "ಸಂಕೇತಗಳು ಕಾಯುತ್ತಿವೆ", vehicles: "ಮಾರ್ಗದಲ್ಲಿರುವ ವಾಹನಗಳು", ofTotal: "1 ಡೆಮೊ ವಾಹನದಲ್ಲಿ", bins: "80%+ ಬಿನ್‌ಗಳು", threshold: "ಮಿತಿ ಪ್ರಚೋದಿತ" },
@@ -157,4 +157,3 @@ export const uiCopy = {
     },
   },
 } as const;
-

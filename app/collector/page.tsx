@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AlertOctagon, Camera, CheckCircle2, MapPin, Navigation, PackageCheck, Route, UploadCloud } from "lucide-react";
 import { AppHeader } from "../../src/components/app-header";
 import { BengaluruMap, type MapMarker } from "../../src/components/bengaluru-map";
@@ -15,6 +15,8 @@ export default function CollectorPage(){
   const {ready}=useRequireUser();
   const {state,locale,stopAction,acceptProof}=useDemo(); const copy=uiCopy[locale].collector; const [proofOpen,setProofOpen]=useState(false); const [before,setBefore]=useState<File>(); const [after,setAfter]=useState<File>(); const [gps,setGps]=useState<{coords:{lat:number;lng:number};mode:"captured"|"demo"}>(); const [checked,setChecked]=useState(false); const [proofStatus,setProofStatus]=useState<""|"uploading"|"error">(""); const [acknowledged,setAcknowledged]=useState(false);
   const route=state.route.routes.find(r=>r.stops.length)??state.route.routes[0]; const next=route?.stops.find(s=>s.status!=="collected"&&s.status!=="blocked"); const vehicle=state.vehicles.find(v=>v.id===route?.vehicleId)??state.vehicles[0]; const collected=route?.stops.filter(s=>s.status==="collected").length??0;
+  const pendingProof=state.proofs.find(proof=>proof.status==="pending_sync"||proof.status==="submitted");
+  useEffect(()=>{if(!pendingProof)return;const timer=setTimeout(()=>setProofOpen(true),0);return()=>clearTimeout(timer)},[pendingProof]);
   // Live ETA/distance for the stop the truck is actually heading to.
   const trip=tripStatusFor(state);
   const activeStop=trip?.nextStopIndex!=null&&route?route.stops[trip.nextStopIndex]:undefined;

@@ -11,9 +11,9 @@ type Locale = "en" | "kn";
 type DemoContextValue = {
   state: DemoState; locale: Locale; setLocale: (locale:Locale)=>void; reset:()=>void; tick:()=>void;
   lastError: string | null; clearError: ()=>void;
-  signal:(type:WasteSignal["type"],location?:{lat:number;lng:number})=>void; report:(input:{title:string;category:string;hygiene:"low"|"moderate"|"high"|"severe";obstruction:"none"|"partial"|"significant"|"traffic_lane";location?:{lat:number;lng:number};photoUrl?:string})=>void;
+  signal:(type:WasteSignal["type"],location?:{lat:number;lng:number})=>string; report:(input:{title:string;category:string;hygiene:"low"|"moderate"|"high"|"severe";obstruction:"none"|"partial"|"significant"|"traffic_lane";location?:{lat:number;lng:number};photoUrl?:string})=>void;
   reoptimize:(trigger?:string)=>void; publishRoute:()=>void; selectReport:(id:string)=>void;
-  stopAction:(action:"arrived"|"collected"|"blocked")=>void; acceptProof:(input:{beforeAssetId:string;afterAssetId:string;gps:{lat:number;lng:number};gpsMode:"captured"|"demo";checklist:Record<string,boolean>})=>Promise<boolean>; confirmCleanup:(outcome:"cleaned"|"partial"|"still_present")=>void;
+  stopAction:(action:"arrived"|"collected"|"blocked")=>void; acceptProof:(input:{beforeAssetId:string;afterAssetId:string;gps:{lat:number;lng:number};gpsMode:"captured"|"demo";checklist:Record<string,boolean>})=>Promise<boolean>; confirmCleanup:(outcome:"cleaned"|"partial"|"still_present",workId?:string)=>void;
 };
 
 const DemoContext=createContext<DemoContextValue|null>(null);
@@ -75,8 +75,8 @@ export function DemoProvider({children}:{children:ReactNode}){
 
   const signal=useCallback((type:WasteSignal["type"],location?:{lat:number;lng:number})=>{
     const at=location??MOCK_USER_LOCATION;
+    const id=`sig-citizen-${crypto.randomUUID()}`;
     setState(prev=>{
-      const id=`sig-citizen-${prev.signals.length+1}`;
       const created:WasteSignal={id,type,category:"mixed",amountBand:type==="waste_outside"?"medium":"small",locality:"Whitefield",location:{...at},status:"queued",createdAt:prev.now,etaMinutes:9,source:SYNTHETIC_SOURCE};
       const next={...prev,signals:[created,...prev.signals],lastAction:type==="waste_outside"?"Waste-outside signal received · route recalculated":"Waste request received · route recalculated"};
       const route=optimizeRoutes(next.vehicles,toWorkStops(next),type==="waste_outside"?"new_waste_outside_signal":"new_citizen_signal",next.seed,prev.route);
@@ -85,7 +85,8 @@ export function DemoProvider({children}:{children:ReactNode}){
         {type:"route.revised",entityId:route.id,message:"Route recalculated after new citizen demand."},
       ])};
     });
-    void push("/api/signals",{type,category:"mixed",amountBand:type==="waste_outside"?"medium":"small",location:{...at}},"citizen");
+    void push("/api/signals",{clientSignalId:id,type,category:"mixed",amountBand:type==="waste_outside"?"medium":"small",location:{...at}},"citizen");
+    return id;
   },[push]);
 
   const report=useCallback((input:{title:string;category:string;hygiene:"low"|"moderate"|"high"|"severe";obstruction:"none"|"partial"|"significant"|"traffic_lane";location?:{lat:number;lng:number};photoUrl?:string})=>{
@@ -122,19 +123,20 @@ export function DemoProvider({children}:{children:ReactNode}){
         return {...r,stops:r.stops.map(s=>{if(handled||s.id!==target.id) return s;handled=true;return {...s,status:action};})};
       });
       let proofs=prev.proofs;
-      if(action==="collected"&&prev.reports.some(r=>r.id===affectedWork)){
+      if(action==="collected"&&(prev.reports.some(r=>r.id===affectedWork)||prev.signals.some(s=>s.id===affectedWork))){
         proofs=[{id:`proof-${prev.proofs.length+1}-${Date.now()}`,reportId:affectedWork,stopId:target.id,capturedAt:prev.now,status:"pending_sync" as const,note:"Collection recorded. Before/after evidence, GPS and checklist still required.",source:SYNTHETIC_SOURCE},...proofs];
       }
+      const signals=action==="collected"?prev.signals.map(signal=>signal.id===affectedWork?{...signal,status:"collected" as const,proofStatus:"pending" as const,citizenOutcome:undefined}:signal):prev.signals;
       let route={...prev.route,routes};
       if(action==="blocked"&&affectedWork){
         route=optimizeRoutes(prev.vehicles,toWorkStops(prev).filter(work=>work.id!==affectedWork),"blocked_access",prev.seed,route);
         route.unassigned=[...route.unassigned,{id:affectedWork,reason:"Collector reported blocked access; dispatch review required"}];
       }
       const citizenFacing=prev.signals.some(s=>s.id===affectedWork)||prev.reports.some(r=>r.id===affectedWork);
-      return {...prev,proofs,route,selectedReportId:affectedWork||prev.selectedReportId,lastAction:action==="arrived"?"Collector arrived on site":action==="collected"?"Collection recorded · cleanup proof required":"Blocked stop removed from the route suffix",events:appendEvents(prev,[
+      return {...prev,signals,proofs,route,selectedReportId:affectedWork||prev.selectedReportId,lastAction:action==="arrived"?"Collector arrived on site":action==="collected"?"Collection recorded · cleanup proof required":"Blocked stop removed from the route suffix",events:appendEvents(prev,[
         {type:`route_stop.${action}`,entityId:affectedWork||prev.route.id,message:`Collector marked stop ${action}.`},
         ...(action==="collected"&&citizenFacing?[{type:"notification.citizen",entityId:affectedWork,message:"Truck collected waste near you — confirm the cleanup once it looks clean."}]:[]),
-        ...(action==="blocked"&&citizenFacing?[{type:"notification.citizen",entityId:affectedWork,message:"The collector could not access the site near you. BBMP dispatch has been notified."}]:[]),
+        ...(action==="blocked"&&citizenFacing?[{type:"notification.citizen",entityId:affectedWork,message:"The collector could not access the site near you. Operations dispatch has been notified."}]:[]),
       ])};
     });
     void push(`/api/collector/stops/${target.id}/action`,{action},"collector");
@@ -151,8 +153,13 @@ export function DemoProvider({children}:{children:ReactNode}){
     }catch{setState(prev=>({...prev,lastAction:"Proof upload failed · evidence remains queued and the report is not cleaned"}));return false}
   },[state.proofs,syncFromApi]);
 
-  const confirmCleanup=useCallback((outcome:"cleaned"|"partial"|"still_present")=>{
-    const target=state.reports.find(r=>r.id===state.selectedReportId&&r.status==="cleaned")??state.reports.find(r=>r.status==="cleaned");
+  const confirmCleanup=useCallback((outcome:"cleaned"|"partial"|"still_present",workId?:string)=>{
+    const signalTarget=workId?state.signals.find(signal=>signal.id===workId&&signal.proofStatus==="accepted"):undefined;
+    if(signalTarget){
+      setState(prev=>{const signals=prev.signals.map(signal=>signal.id===signalTarget.id?{...signal,citizenOutcome:(outcome==="cleaned"?"confirmed":"reopened") as "confirmed"|"reopened",status:outcome==="cleaned"?signal.status:"queued" as const}:signal);const next={...prev,signals,lastAction:outcome==="cleaned"?"Pickup confirmed · case closed":"Pickup reopened and returned to the route"};const route=outcome==="cleaned"?next.route:optimizeRoutes(next.vehicles,toWorkStops(next),"citizen_reopened_signal",next.seed,next.route);return {...next,route,events:appendEvents(prev,[{type:outcome==="cleaned"?"signal.confirmed":"signal.reopened",entityId:signalTarget.id,message:outcome==="cleaned"?"Citizen verified pickup completion.":"Citizen reported waste still present; pickup reopened."}])}});
+      void push(`/api/signals/${signalTarget.id}/confirmation`,{outcome},"citizen");return;
+    }
+    const target=state.reports.find(r=>r.id===state.selectedReportId&&r.status==="cleaned");
     if(!target){setState(prev=>({...prev,lastAction:"No verified cleanup is awaiting confirmation"}));return}
     const targetId=target.id;
     setState(prev=>{
@@ -162,7 +169,7 @@ export function DemoProvider({children}:{children:ReactNode}){
       return {...next,route,events:appendEvents(prev,[{type:outcome==="cleaned"?"report.confirmed":"report.reopened",entityId:targetId,message:outcome==="cleaned"?"Citizen verified cleanup.":"Citizen reported incomplete cleanup; report reopened."}])};
     });
     void push(`/api/reports/${targetId}/confirmation`,{outcome},"citizen");
-  },[push,state.reports]);
+  },[push,state.reports,state.selectedReportId,state.signals]);
 
   const value=useMemo(()=>({state,locale,setLocale,reset,tick,lastError,clearError:()=>setLastError(null),signal,report,reoptimize,publishRoute,selectReport,stopAction,acceptProof,confirmCleanup}),[state,locale,reset,tick,lastError,signal,report,reoptimize,publishRoute,selectReport,stopAction,acceptProof,confirmCleanup]);
   return <DemoContext.Provider value={value}>

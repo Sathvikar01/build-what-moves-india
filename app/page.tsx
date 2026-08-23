@@ -40,12 +40,13 @@ export default function Home() {
       <header className="site-header">
         <a className="brand" href="/" aria-label="Bengaluru Smart Waste home">
           <span className="brand-mark" aria-hidden="true">BW</span>
-          <span><strong>Bengaluru Smart Waste</strong><small>Mahadevapura pilot</small></span>
+          <span><strong>Bengaluru Waste Coordination</strong><small>Independent Mahadevapura prototype</small></span>
         </a>
         <nav className="landing-nav" aria-label="Landing page navigation">
           <span className="demo-badge"><ShieldCheck size={14} aria-hidden="true" />{copy.badge}</span>
           <button type="button" className="quiet-button" onClick={() => setLocale(locale === "en" ? "kn" : "en")} aria-label="Switch language">{locale === "en" ? "ಕನ್ನಡ" : "English"}</button>
           <a className="text-link" href="/data-assumptions">{copy.dataLink}</a>
+          <a className="text-link" href="/impact-replay">Impact replay</a>
           <a className="text-link" href="/login">{uiCopy[locale].signIn}</a>
         </nav>
       </header>
@@ -87,6 +88,8 @@ export default function Home() {
         ))}
       </section>
 
+      <aside className="governance-note" role="note"><strong>Built to complement current Bengaluru governance</strong><span>This is an independent prototype for citizen-to-cleanup coordination across GBA/BSWML-style workflows—not an official BBMP, GBA or BSWML service.</span></aside>
+
       <section className="role-section" aria-labelledby="choose-role">
         <div className="role-heading">
           <h2 id="choose-role">{copy.chooseTitle}</h2>
@@ -99,7 +102,7 @@ export default function Home() {
             return (
               <a className="role-row" href={role.href} key={role.href}>
                 <span className="role-icon" aria-hidden="true"><Icon size={21} /></span>
-                <span className="role-name"><strong>{strings.title}</strong><small lang="kn">{locale === "kn" ? "Citizen service · BBMP · Collector" : "ನಾಗರಿಕ ಸೇವೆ · ಕಾರ್ಯಾಚರಣೆ · ಸಂಗ್ರಹ"}</small></span>
+                <span className="role-name"><strong>{strings.title}</strong><small lang={locale==="kn"?"en":"kn"}>{locale === "kn" ? "Citizen · GBA/BSWML-style operations · Collector" : "ನಾಗರಿಕ ಸೇವೆ · ಕಾರ್ಯಾಚರಣೆ · ಸಂಗ್ರಹ"}</small></span>
                 <span className="role-copy">{strings.copy}</span>
                 <span className="role-action">{strings.action}<ArrowRight size={17} aria-hidden="true" /></span>
               </a>
@@ -109,7 +112,7 @@ export default function Home() {
       </section>
 
       <footer className="landing-footer">
-        <p>Bengaluru Smart Waste Management</p>
+        <p>Bengaluru Waste Coordination prototype</p>
         <p>{copy.footerTag}</p>
         <a href="/data-assumptions">{copy.footerLink}</a>
       </footer>

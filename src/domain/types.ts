@@ -23,6 +23,7 @@ export interface WasteSignal {
   id: string; type: "have_waste" | "waste_outside"; category: string; amountBand: "small" | "medium" | "large";
   locality: string; location: GeoPoint; status: "received" | "queued" | "assigned" | "en_route" | "collected" | "cancelled";
   createdAt: string; etaMinutes?: number; routeId?: string; source: SourceMeta;
+  proofStatus?: "pending" | "accepted"; citizenOutcome?: "confirmed" | "reopened"; dispatchReviewAt?: string;
 }
 
 export interface GarbageReport {

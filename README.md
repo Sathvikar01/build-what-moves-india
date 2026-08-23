@@ -73,10 +73,13 @@ Other commands:
 ## The Three Roles
 
 ### 1. Citizen — `/citizen` (mobile-first, English + ಕನ್ನಡ)
+- **No-login citizen entry** for the core service journey; demo sign-in remains optional for role switching.
+- **2026 four-stream preparation** for wet, dry, sanitary, and special-care waste, with bilingual examples, exceptions, and an honest reminder to verify locality collection notices.
 - Two quick **waste signals**: "I have waste" / "Waste kept outside" — each immediately recalculates the demo route.
 - **Garbage reporting** with photo (EXIF/metadata stripped in-browser, re-encoded), geolocation capture, category/hygiene/obstruction classification.
 - **Live truck map** with ETA, nearby smart-bin fill status, and a transparent activity timeline.
 - **Cleanup confirmation**: after a collector's proof is accepted, the citizen closes the loop — cleaned / partly cleaned / still present (reopening returns the report to the priority queue).
+- **Accountable journey + low-data mode**: ETA, route reason, proof, citizen closure/reopening and four-hour demo SLA escalation stay visible even when map tiles are paused.
 
 ### 2. BBMP Operations — `/bbmp` (desktop control room)
 - **Live overview**: "Today in Mahadevapura" impact strip (litres collected, stops completed, reports resolved/pending, average pickup latency, verified proofs), KPI cards, fleet + demand map.
@@ -90,7 +93,7 @@ Other commands:
 - Actions: **arrived → collected** (enforced status transitions) or **blocked** (stop removed, suffix re-optimized, dispatch review flagged).
 - **Cleanup proof**: before/after photos (metadata-removed), device GPS (or labelled demo coordinate), and a checklist — all required before a report can become "cleaned".
 
-Plus a public transparency page at **`/data-assumptions`**: factor weights, algorithm cards, privacy statement.
+Plus public transparency pages at **`/data-assumptions`** (factor weights, algorithm cards, privacy statement) and **`/impact-replay`** (seed-4242 fixed-baseline vs adaptive comparison with raw missed-pickup, overflow, waiting, fairness, distance, fuel/CO₂-proxy and fallback metrics).
 
 ---
 
@@ -200,6 +203,7 @@ All endpoints return `{ data, meta: { requestId, generatedAt, cursor? } }` or `{
 | POST | `/api/demo/reset` | bbmp | Reset to seed 4242 |
 | POST | `/api/demo/tick` | bbmp, collector | Advance simulation 5–300 s |
 | POST | `/api/signals` | citizen | Create a waste signal |
+| POST | `/api/signals/[signalId]/confirmation` | citizen | Confirm or reopen a proof-accepted Waste Ready pickup |
 | POST | `/api/reports` | citizen | Create a garbage report (requires prior photo upload) |
 | POST | `/api/reports/[reportId]/confirmation` | citizen | Confirm / reopen cleanup |
 | POST | `/api/routing/optimize` | bbmp | Recalculate route plan |
