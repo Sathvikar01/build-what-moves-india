@@ -1,0 +1,2 @@
+import { describe,expect,it } from "vitest";import { createDemoState } from "../data/demo";
+describe("placement recommendations",()=>{it("returns six diversified, fully explained candidates",()=>{const recs=createDemoState().recommendations;expect(recs).toHaveLength(6);for(const rec of recs){expect(rec.features).toHaveLength(9);expect(rec.features.reduce((s,f)=>s+f.contribution,0)).toBeCloseTo(rec.score,1);expect(rec.confidence).toBeGreaterThan(0);if(rec.features.find(f=>f.key==="publicLand")?.raw===null)expect(rec.requiresFieldValidation).toBe(true)}})});
