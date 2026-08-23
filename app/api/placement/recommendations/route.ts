@@ -1,0 +1,2 @@
+import { getState } from "../../../../src/server/store";import { ok,requireRole } from "../../../../src/server/http";
+export async function GET(request:Request){const denied=requireRole(request,["bbmp"]);if(denied)return denied;return ok({projection:"EPSG:32643",gridMeters:120,suppressionMeters:300,recommendations:getState().recommendations,provenance:["GBA 2025 Mahadevapura wards","OpenStreetMap ODbL","Synthetic demand seed 4242"]})}

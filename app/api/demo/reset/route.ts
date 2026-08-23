@@ -1,0 +1,2 @@
+import { idempotent,reset } from "../../../../src/server/store";import { fail,ok,requireIdempotency,requireRole } from "../../../../src/server/http";
+export async function POST(request:Request){const denied=requireRole(request,["bbmp"]);if(denied)return denied;const idem=requireIdempotency(request);if(!idem)return fail(400,"IDEMPOTENCY_REQUIRED","Provide idempotency-key.");return ok(idempotent(idem.key,reset))}

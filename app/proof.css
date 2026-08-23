@@ -1,0 +1,6 @@
+.proof-grid > * { cursor: pointer; }
+.proof-grid input[type="file"] { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.proof-grid .proof-captured { border-color: #70a784; color: var(--green-dark); background: #e4f3e9; }
+.proof-check { display: flex; align-items: center; gap: 9px; margin-top: 12px; color: var(--muted); font-size: 11px; }
+.proof-check input { width: 20px; height: 20px; }
+.primary-button:disabled { cursor: not-allowed; opacity: .45; }
