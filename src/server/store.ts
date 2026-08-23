@@ -5,6 +5,7 @@ import { makeCitizenReport } from "../domain/simulate";
 import { binStatusFor, householdDump } from "../domain/simulate";
 import { pointAtDistance } from "../domain/road-graph";
 import { getRoadNetwork, realRoadTrip } from "./road-network";
+import { getCloudflareEnv } from "./cf";
 import type { DemoEvent, DemoState, WasteSignal } from "../domain/types";
 
 type UploadedAsset={contentType:string;bytes:Uint8Array;role:"citizen"|"collector";storedAt:string;storage:"r2"|"memory"};
@@ -338,8 +339,8 @@ startDayEngine();
 // audit trail survive worker isolate resets. Any failure is silently ignored.
 async function journalEvents(events:DemoEvent[]){
   try{
-    const {env}=await import("cloudflare:workers");
-    const db=(env as {DB?:unknown}).DB;
+    const env=await getCloudflareEnv();
+    const db=env?.DB;
     if(!db) return;
     const { drizzle } = await import("drizzle-orm/d1");
     const { eventJournal } = await import("../../db/schema");
