@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "name": "Namma Civic Atlas",
+  "breakpoints": [620, 760, 900, 1050],
+  "shadows": {
+    "ambient": "0 18px 50px rgba(24,47,34,.13)",
+    "panel": "0 8px 28px rgba(24,47,34,.045)",
+    "overlay": "0 7px 24px rgba(20,36,28,.12)"
+  },
+  "motion": { "short": "170ms ease-out", "reduced": ".01ms" },
+  "invariants": ["Map/list parity", "Synthetic data labels", "Explainability before score", "Evidence before cleanup confirmation"]
+}
