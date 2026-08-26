@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { appendEvents, advanceBins, binStatusFor, citizenReportPriority, DUMP_HISTORY_LIMIT, householdDump, makeCitizenReport } from "./simulate";
+import { appendEvents, advanceBins, binStatusFor, citizenReportPriority, driftUserLocation, DUMP_HISTORY_LIMIT, householdDump, makeCitizenReport, USER_DRIFT_BOUNDS, USER_DRIFT_MAX_METERS, USER_DRIFT_MIN_METERS } from "./simulate";
+import { haversineKm } from "./geo";
+import type { GeoPoint } from "./types";
+import { MOCK_USER_LOCATION } from "../data/locations";
 import { createDemoState, SYNTHETIC_SOURCE } from "../data/demo";
 
 describe("binStatusFor", () => {
@@ -122,5 +125,42 @@ describe("householdDump", () => {
     const state = createDemoState();
     for (const bin of state.bins) bin.fillPercent = 100;
     expect(householdDump(state, 1)).toBeNull();
+  });
+});
+
+describe("driftUserLocation", () => {
+  it("is deterministic per entropy and moves within the configured band", () => {
+    const a = driftUserLocation(MOCK_USER_LOCATION, 7);
+    const b = driftUserLocation(MOCK_USER_LOCATION, 7);
+    expect(a).toEqual(b);
+    expect(a.meters).toBeGreaterThanOrEqual(USER_DRIFT_MIN_METERS);
+    expect(a.meters).toBeLessThanOrEqual(USER_DRIFT_MAX_METERS);
+    // A ≥50 m walk always changes the 6-decimal point.
+    expect(a.location).not.toEqual(MOCK_USER_LOCATION);
+    expect(haversineKm(MOCK_USER_LOCATION, a.location) * 1000).toBeLessThanOrEqual(USER_DRIFT_MAX_METERS + 5);
+  });
+
+  it("keeps every step inside the Whitefield bounding box", () => {
+    let point: GeoPoint = { lat: USER_DRIFT_BOUNDS.maxLat, lng: USER_DRIFT_BOUNDS.maxLng };
+    for (let i = 0; i < 300; i++) {
+      point = driftUserLocation(point, i).location;
+      expect(point.lat).toBeGreaterThanOrEqual(USER_DRIFT_BOUNDS.minLat);
+      expect(point.lat).toBeLessThanOrEqual(USER_DRIFT_BOUNDS.maxLat);
+      expect(point.lng).toBeGreaterThanOrEqual(USER_DRIFT_BOUNDS.minLng);
+      expect(point.lng).toBeLessThanOrEqual(USER_DRIFT_BOUNDS.maxLng);
+      expect(Number.isInteger(point.lat * 1e6)).toBe(true);
+    }
+  });
+
+  it("wanders rather than marching in one direction", () => {
+    let point = MOCK_USER_LOCATION;
+    let north = 0;
+    for (let i = 0; i < 100; i++) {
+      const next = driftUserLocation(point, i).location;
+      if (next.lat > point.lat) north++;
+      point = next;
+    }
+    expect(north).toBeGreaterThan(20);
+    expect(north).toBeLessThan(80);
   });
 });

@@ -24,7 +24,7 @@ A hackathon pilot for Mahadevapura zone (wards 28–50, Bengaluru East) covering
 10. [Design System](#design-system)
 11. [Accessibility & i18n](#accessibility--i18n)
 12. [Testing](#testing)
-13. [Deployment (Cloudflare)](#deployment-cloudflare)
+13. [Deployment (Vercel)](#deployment-vercel)
 14. [Product Principles](#product-principles)
 15. [Known Limitations](#known-limitations)
 
@@ -43,7 +43,7 @@ Other commands:
 
 | Command | What it does |
 |---|---|
-| `npm run dev` | Start the dev server (Vite/vinext) on port 3000 |
+| `npm run dev` | Start the Next.js dev server on port 3000 |
 | `npm run build` | Production build |
 | `npm run start` | Serve the production build |
 | `npm test` | Run the vitest unit suite |
@@ -57,15 +57,15 @@ Other commands:
 
 | Layer | Choice |
 |---|---|
-| UI framework | React 19 + Next.js-style App Router (`app/`) on **vinext** (Vite 8 runtime) |
+| UI framework | React 19 + Next.js 16 App Router (`app/`) |
 | Language | TypeScript 5.9 (strict) |
 | Styling | Hand-written design-token CSS (`app/globals.css`), zero utility frameworks |
 | Maps | Leaflet + OpenStreetMap tiles with full fallback list-alternative |
 | Icons | lucide-react |
 | Validation | zod (API request bodies) |
-| Database | Cloudflare D1 (SQLite) via Drizzle ORM — audit-event journaling |
-| Object storage | Cloudflare R2 for private evidence photos (memory fallback) |
-| Runtime/deploy | Cloudflare Workers (wrangler + `@cloudflare/vite-plugin`) |
+| Persistence | In-memory per-isolate `DemoState` (labelled demo; no database) |
+| Evidence photos | Private in-memory store, served back to signed-in demo roles via `/api/uploads/[assetId]` |
+| Runtime/deploy | Vercel (Next.js) — `vercel.json` pins the framework preset |
 | Tests | Vitest (domain units) + Playwright (e2e) |
 
 ---
@@ -131,10 +131,10 @@ Citizen signal/report ──▶ 10-factor priority score ──▶ ACO route pla
 
 **One source of truth for simulation rules** — `src/domain/simulate.ts` implements the tick rules (vehicle movement, bin fill thresholds 70%/94%, event-id generation, citizen-report scoring defaults) and is used by **both** the client provider and the server store, so optimistic updates and server state can't drift apart.
 
-**Event journal** — every state change appends a cursor-ordered `DemoEvent`; mutations best-effort journal new events into **Cloudflare D1** (graceful memory-only fallback when the binding is absent) so the audit trail survives isolate resets.
+**Event journal** — every state change appends a cursor-ordered `DemoEvent` to the in-memory `state.events` list (capped at 250 entries, cursors never reset). The journal powers the activity timelines and the `/api/sync` incremental feed.
 
 ```
-app/(pages + api routes)  ──▶  src/server/store.ts  ──▶  D1 event_journal
+app/(pages + api routes)  ──▶  src/server/store.ts  ──▶  in-memory DemoState (per isolate)
         │                              │
 src/components/demo-provider.tsx       │
         │                              │
@@ -171,7 +171,7 @@ vmh/
 │   │   ├── types.ts              # All shared types
 │   │   └── *.test.ts             # Vitest suites
 │   ├── server/
-│   │   ├── store.ts              # In-memory DemoState + D1 journaling + caches
+│   │   ├── store.ts              # In-memory DemoState + day-cycle engine + caches
 │   │   └── http.ts               # ok/fail helpers, role guard, idempotency
 │   ├── data/
 │   │   ├── demo.ts               # Deterministic seed-4242 scenario
@@ -179,39 +179,36 @@ vmh/
 │   │   └── copy.ts               # Bilingual EN/KN citizen copy
 │   ├── client/image.ts           # EXIF-stripping canvas re-encode
 │   └── config/map.ts             # Tile config + resilience
-├── db/
-│   ├── schema.ts                 # Full Drizzle/D1 schema (17 tables)
-│   ├── index.ts                  # getDb() via env.DB binding
-│   └── drizzle/                  # SQL migrations
 ├── PRODUCT.md / DESIGN.md        # Product spec + design tokens
-├── vite.config.ts / wrangler config / drizzle.config.ts
+├── vercel.json                   # Vercel deploy preset (Next.js)
 ```
 
 ---
 
 ## API Reference
 
-All endpoints return `{ data, meta: { requestId, generatedAt, cursor? } }` or `{ error: { code, message } }`. Mutations require an `idempotency-key` header; all endpoints require the `x-demo-role` header (`citizen` | `bbmp` | `collector`).
+All endpoints return `{ data, meta: { requestId, generatedAt, cursor? } }` or `{ error: { code, message } }`. Mutations require an `idempotency-key` header. Every endpoint requires the `x-demo-role` header (`citizen` | `bbmp` | `collector`) except `/api/diagnostics` (health probe).
 
 | Method | Endpoint | Role(s) | Purpose |
 |---|---|---|---|
-| GET | `/api/state` | any | Full demo state (with cursor) |
-| GET | `/api/sync` | any | Cursor-based event feed |
+| GET | `/api/state` | citizen, bbmp, collector | Full demo state (with cursor) |
+| GET | `/api/sync` | any | Cursor-based event feed (topics + limit validated) |
 | POST | `/api/demo/reset` | bbmp | Reset to seed 4242 |
-| POST | `/api/demo/tick` | bbmp, collector | Advance simulation 5–300 s |
+| POST | `/api/demo/tick` | bbmp, collector | Advance simulation 5–300 s (increments the tick counter) |
 | POST | `/api/signals` | citizen | Create a waste signal |
 | POST | `/api/reports` | citizen | Create a garbage report (requires prior photo upload) |
 | POST | `/api/reports/[reportId]/confirmation` | citizen | Confirm / reopen cleanup |
 | POST | `/api/routing/optimize` | bbmp | Recalculate route plan |
 | POST | `/api/routing/publish` | bbmp | Publish a route revision |
-| GET | `/api/routing/active` | any | Current route plan |
-| GET | `/api/priority/rankings` | any | Ranked open reports with audits |
-| GET | `/api/placement/recommendations` | any | Bin placement recommendations |
-| GET | `/api/citizen/overview` | citizen | Zone, vehicle, ETA, bins, activity |
+| GET | `/api/routing/active` | bbmp, collector | Current route plan |
+| GET | `/api/priority/rankings` | bbmp | Ranked open reports with audits |
+| GET | `/api/placement/recommendations` | bbmp | Bin placement recommendations |
+| GET | `/api/citizen/overview` | citizen | Zone, vehicle, live ETA, bins, activity |
 | GET | `/api/bbmp/overview` | bbmp | Operations summary |
-| POST | `/api/collector/stops/[stopId]/action` | collector | arrived / collected / blocked |
+| POST | `/api/collector/stops/[stopId]/action` | collector | arrived / collected / blocked (guarded lifecycle transitions) |
 | POST | `/api/collector/stops/[stopId]/proof` | collector | Submit cleanup proof |
-| POST | `/api/uploads` | citizen, collector | Evidence photo (magic-byte check, 5 MB cap, R2 + memory fallback) |
+| POST | `/api/uploads` | citizen, collector | Evidence photo (magic-byte check, 5 MB cap, private in-memory store) |
+| GET | `/api/uploads/[assetId]` | citizen, bbmp, collector | Serve stored evidence back (same-origin embeds allowed for `<img>`) |
 | GET | `/api/diagnostics` | any | Health/diagnostics |
 
 Example:
@@ -243,12 +240,12 @@ Single source of truth for tick rules, bin thresholds (filling ≥ 70%, full ≥
 
 ## Data & Persistence
 
-- **Scenario** — `src/data/demo.ts` builds the deterministic seed-4242 world: 4 vehicles, 10 smart bins, 6 reports, 6 signals, 8 placement candidates, all timestamped from a fixed demo epoch.
-- **Runtime state** — in-memory `DemoState` on the worker (`globalThis`); reads stay in memory for demo speed.
-- **D1 journal** — state changes are append-only events, best-effort persisted to the `event_journal` D1 table via Drizzle (`db/schema.ts` defines the full 17-table schema for future hardening). Absent binding ⇒ silent memory-only fallback.
-- **Evidence photos** — uploaded to private R2 objects (memory fallback); validated by magic-byte signature, 5 MB cap, and re-encoded client-side to strip EXIF/metadata before upload.
-- **Bounded caches** — idempotency keys (200) and in-memory uploads (60) are capped FIFO; no unbounded growth.
-- **Client** — only the language preference (`bsw-locale`) is persisted in localStorage; it is restored on load.
+- **Scenario** — `src/data/demo.ts` builds the deterministic seed-4242 world: 1 vehicle, 10 smart bins, 6 reports, 6 signals, 8 placement candidates, all timestamped from a fixed demo epoch.
+- **Runtime state** — in-memory `DemoState` on the server (`globalThis`, per isolate); reads stay in memory for demo speed. State resets when the isolate recycles — every screen labels the data as a synthetic demo.
+- **Event journal** — cursor-ordered in-memory events (capped at 250; cursors never reset, even across `/api/demo/reset`), powering activity timelines and `/api/sync`.
+- **Evidence photos** — private in-memory store; validated by magic-byte signature, 5 MB cap, and re-encoded client-side to strip EXIF/metadata before upload. Served back through `/api/uploads/[assetId]` (role header or same-origin embed) so the cleanup-confirmation loop closes visually.
+- **Bounded caches** — idempotency keys (200, LRU) and in-memory uploads (120, LRU) are capped; no unbounded growth.
+- **Client** — only the language preference (`bsw-locale`) and the mock demo session (`bsw-user`) are persisted in localStorage; both are restored on load.
 
 ---
 
@@ -288,23 +285,19 @@ npm test   # vitest
 - `src/domain/placement.test.ts` — 9-factor scoring, diversity suppression, unsafe exclusion.
 - Playwright e2e config is included (`@playwright/test`); test ids like `data-testid="report-form"` are embedded throughout for scripting.
 
-All 13 unit tests pass; `tsc --noEmit` and the production build are clean.
+All 43 unit tests pass; `tsc --noEmit`, eslint, and the production build are clean.
 
 ---
 
-## Deployment (Cloudflare)
+## Deployment (Vercel)
 
-The app targets Cloudflare Workers with bindings defined in `.openai/hosting.json`:
-
-- `DB` — D1 database for the event journal (optional; falls back to memory).
-- `FILES` — R2 bucket for private evidence photos (optional; falls back to memory).
+The app is a standard Next.js build; `vercel.json` pins the framework preset.
 
 ```bash
 npm run build
-npx wrangler deploy
 ```
 
-Without bindings, everything still runs — persistence simply degrades to per-isolate memory.
+Deploy by importing the repository in Vercel (zero extra configuration) or `npx vercel deploy`. State is per-isolate memory by design — a labelled demo, not a system of record.
 
 ---
 
@@ -325,7 +318,7 @@ Without bindings, everything still runs — persistence simply degrades to per-i
 - This is a labelled demo: no production identity, payments, notifications, or live BBMP system integration.
 - Operational telemetry (vehicles, bins, ETAs) is synthetic seed-4242 data and must never be presented as official BBMP telemetry.
 - The `x-demo-role` header is a demo guard, not authentication.
-- In-memory state resets when a worker isolate recycles (the D1 journal preserves the audit trail); route-replay animation is a planned stretch feature.
+- State is in-memory per server isolate: a recycle restarts the scenario from seed 4242 (event cursors stay monotonic so sync clients re-order safely). When the autonomous day-cycle engine services a report stop, it attaches clearly labelled *synthetic* before/after evidence rather than camera captures.
 
 ---
 

@@ -1,5 +1,5 @@
 import { calculatePriority } from "./priority";
-import type { DemoEvent, DemoState, GarbageReport, SmartBin, Vehicle, WasteDump } from "./types";
+import type { DemoEvent, DemoState, GarbageReport, GeoPoint, SmartBin, Vehicle, WasteDump } from "./types";
 
 // Single source of truth for the demo simulation rules shared by the client
 // provider and the server store. Previously these rules were duplicated (and
@@ -71,6 +71,38 @@ export function householdDump(state: DemoState, entropy: number): WasteDump | nu
   };
   state.dumps = [...history.slice(-(DUMP_HISTORY_LIMIT - 1)), dump];
   return dump;
+}
+
+// ─── Mock citizen live-location drift ────────────────────────────────────────
+// The mock citizen wanders slowly around Whitefield so the "you" dot and the
+// route's pickup stop stay live. Pure helper: given the current point and an
+// entropy seed it returns the next point plus the distance walked, always
+// inside a small bounding box of the pilot zone. Deterministic per entropy.
+export const USER_DRIFT_INTERVAL_WALL_MS = 40000;
+export const USER_DRIFT_MIN_METERS = 50;
+export const USER_DRIFT_MAX_METERS = 140;
+// ~600 m x ~900 m box around Hope Farm / Whitefield (inside the OSM bbox).
+export const USER_DRIFT_BOUNDS = { minLat: 12.9680, maxLat: 12.9765, minLng: 77.7420, maxLng: 77.7510 } as const;
+
+export function driftUserLocation(location: GeoPoint, entropy: number): { location: GeoPoint; meters: number } {
+  let s = Math.imul(entropy + 1, 2654435761) >>> 0;
+  const rand = () => {
+    s = (1664525 * s + 1013904223) >>> 0;
+    return s / 4294967296;
+  };
+  const angle = rand() * Math.PI * 2;
+  const meters = Math.round(USER_DRIFT_MIN_METERS + rand() * (USER_DRIFT_MAX_METERS - USER_DRIFT_MIN_METERS));
+  const dLat = (meters * Math.cos(angle)) / 111320;
+  const dLng = (meters * Math.sin(angle)) / (111320 * Math.max(0.5, Math.cos((location.lat * Math.PI) / 180)));
+  const next: GeoPoint = {
+    lat: clampRound6(location.lat + dLat, USER_DRIFT_BOUNDS.minLat, USER_DRIFT_BOUNDS.maxLat),
+    lng: clampRound6(location.lng + dLng, USER_DRIFT_BOUNDS.minLng, USER_DRIFT_BOUNDS.maxLng),
+  };
+  return { location: next, meters };
+}
+
+function clampRound6(value: number, min: number, max: number) {
+  return Math.round(Math.min(max, Math.max(min, value)) * 1e6) / 1e6;
 }
 
 export function advanceVehicles(vehicles: Vehicle[], state: DemoState, now: string): Vehicle[] {

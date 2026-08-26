@@ -1,26 +1,40 @@
 "use client";
 
+import { useMemo } from "react";
+import Link from "next/link";
 import { ArrowRight, Building2, MapPin, Recycle, Route, ShieldCheck } from "lucide-react";
 import { BengaluruMap, MOCK_USER_LOCATION, type MapMarker } from "../src/components/bengaluru-map";
 import { routeOnRoads } from "../src/domain/road-graph";
-import { LOCATION_SOURCE, MAHADEVAPURA_LOCATIONS } from "../src/data/locations";
+import { LOCATION_SOURCE } from "../src/data/locations";
 import { uiCopy } from "../src/data/copy";
 import { useDemo } from "../src/components/demo-provider";
-import type { GeoPoint } from "../src/domain/types";
+import { createDemoState } from "../src/data/demo";
+import { tripStatusFor } from "../src/components/trip-status";
+
+// The landing preview is generated from the same deterministic seed-4242
+// scenario every console uses — no hand-written numbers on this page.
+const seedState = createDemoState();
+const landingVehicle = seedState.vehicles.find(v => v.status !== "offline") ?? seedState.vehicles[0];
+const landingStops = seedState.route.routes[0]?.stops ?? [];
 
 const landingMarkers: MapMarker[] = [
-  { id: "vehicle-whitefield", label: "Collection vehicle KA-01-AF-2147", location: { lat: 12.9685, lng: 77.7358 }, kind: "vehicle", detail: "9 min away" },
-  { id: "bin-kundalahalli", label: MAHADEVAPURA_LOCATIONS.kundalahalliMarket.label, location: MAHADEVAPURA_LOCATIONS.kundalahalliMarket.location, kind: "bin", detail: "88% full" },
-  { id: "report-marathahalli", label: MAHADEVAPURA_LOCATIONS.marathahalliServiceLane.label, location: MAHADEVAPURA_LOCATIONS.marathahalliServiceLane.location, kind: "report", detail: "route updated" },
-  { id: "report-whitefield", label: `${MAHADEVAPURA_LOCATIONS.itplGate.label} overflow report`, location: MAHADEVAPURA_LOCATIONS.itplGate.location, kind: "report", detail: "high priority" },
+  { id: landingVehicle.id, label: landingVehicle.label, location: landingVehicle.location, kind: "vehicle", detail: `${landingVehicle.status.replaceAll("_", " ")} · synthetic` },
+  ...(seedState.userLocation ? [{ id: seedState.userLocation.id, label: "Citizen handover point", location: seedState.userLocation.location, kind: "pickup" as const, detail: "mock live location · ACO-routed stop" }] : []),
+  ...[...seedState.bins].sort((a, b) => b.fillPercent - a.fillPercent).slice(0, 3).map(bin => ({
+    id: bin.id, label: bin.label, location: bin.location, kind: "bin" as const,
+    detail: `${Math.round(bin.fillPercent)}% full`, overflow: bin.fillPercent >= 100,
+  })),
+  ...seedState.reports.filter(report => report.status !== "confirmed").slice(0, 2).map(report => ({
+    id: report.id, label: report.title, location: report.location, kind: "report" as const,
+    detail: `${report.priority.audit.effectiveScore.toFixed(1)} · ${report.priority.audit.effectiveBand}`,
+  })),
 ];
 
-const landingRoute: GeoPoint[] = [
-  MAHADEVAPURA_LOCATIONS.marathahalliServiceLane.location,
-  MAHADEVAPURA_LOCATIONS.kundalahalliMarket.location,
-  { lat: 12.9685, lng: 77.7358 },
-  MAHADEVAPURA_LOCATIONS.itplGate.location,
-];
+const landingRoadRoute = routeOnRoads([
+  landingVehicle.location,
+  ...landingStops.map(stop => stop.location),
+  landingVehicle.location,
+]);
 
 const roleMeta = [
   { href: "/citizen", key: "citizen" as const, icon: Recycle },
@@ -28,23 +42,30 @@ const roleMeta = [
   { href: "/collector", key: "collector" as const, icon: Route },
 ];
 
-const landingVehicleLocation: GeoPoint = { lat: 12.9685, lng: 77.7358 };
-const landingRoadRoute = routeOnRoads([landingVehicleLocation, ...landingRoute, landingVehicleLocation]);
-
 export default function Home() {
   const { locale, setLocale } = useDemo();
   const copy = uiCopy[locale].landing;
+  // Live-from-seed summary strip: counts come from the scenario itself.
+  const summary = useMemo(() => {
+    const trip = tripStatusFor(seedState);
+    const nearestEta = trip?.etaToNextMinutes ?? Math.min(...seedState.signals.map(signal => signal.etaMinutes ?? 9), 9);
+    return {
+      locations: landingMarkers.length,
+      revisions: seedState.route.version,
+      nearest: `${nearestEta} min`,
+    };
+  }, []);
   return (
     <main className="landing-shell" lang={locale === "kn" ? "kn" : "en"}>
       <a className="skip-link" href="#main-content">Skip to main content</a>
       <header className="site-header">
-        <a className="brand" href="/" aria-label="Bengaluru Smart Waste home">
+        <Link className="brand" href="/" aria-label="Bengaluru Smart Waste home">
           <span className="brand-mark" aria-hidden="true">BW</span>
           <span><strong>Bengaluru Smart Waste</strong><small>Mahadevapura pilot</small></span>
-        </a>
+        </Link>
         <nav className="landing-nav" aria-label="Landing page navigation">
           <span className="demo-badge"><ShieldCheck size={14} aria-hidden="true" />{copy.badge}</span>
-          <button type="button" className="quiet-button" onClick={() => setLocale(locale === "en" ? "kn" : "en")} aria-label="Switch language">{locale === "en" ? "ಕನ್ನಡ" : "English"}</button>
+          <button type="button" className="quiet-button" onClick={() => setLocale(locale === "en" ? "kn" : "en")} aria-label={locale === "en" ? "Switch language to Kannada" : "Switch language to English"}>{locale === "en" ? "ಕನ್ನಡ" : "English"}</button>
           <a className="text-link" href="/data-assumptions">{copy.dataLink}</a>
           <a className="text-link" href="/login">{uiCopy[locale].signIn}</a>
         </nav>
@@ -54,7 +75,7 @@ export default function Home() {
         <div className="hero-copy">
           <h1>{copy.hero}</h1>
           <p>{copy.sub}</p>
-          <div className="hero-actions" aria-label="Start using the demo">
+          <div className="hero-actions">
             <a className="landing-button landing-button-primary" href="/citizen" data-testid="hero-citizen">
               {copy.primaryAction} <ArrowRight size={18} aria-hidden="true" />
             </a>
@@ -72,11 +93,11 @@ export default function Home() {
             </div>
             <span className="map-live-state">{copy.mapState}</span>
           </div>
-          <BengaluruMap markers={landingMarkers} route={landingRoadRoute} vehiclePaths={[{ vehicleId: "vehicle-whitefield", path: landingRoadRoute }]} userLocation={MOCK_USER_LOCATION} height="clamp(340px, 44vw, 520px)" />
+          <BengaluruMap markers={landingMarkers} route={landingRoadRoute} vehiclePaths={[{ vehicleId: landingVehicle.id, path: landingRoadRoute }]} userLocation={seedState.userLocation?.location ?? MOCK_USER_LOCATION} height="clamp(340px, 44vw, 520px)" />
           <div className="map-summary" aria-label="Map summary">
-            <span><strong>{landingMarkers.length}</strong> {copy.locations}</span>
-            <span><strong>1</strong> {copy.routeRevision}</span>
-            <span><strong>9 min</strong> {copy.nearest}</span>
+            <span><strong>{summary.locations}</strong> {copy.locations}</span>
+            <span><strong>{summary.revisions}</strong> {copy.routeRevision}</span>
+            <span><strong>{summary.nearest}</strong> {copy.nearest}</span>
           </div>
         </div>
       </section>

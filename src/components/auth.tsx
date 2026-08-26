@@ -20,10 +20,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<DemoUser | null>(null);
 
   useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (raw) setUser(JSON.parse(raw) as DemoUser);
-    } catch { /* ignore corrupt state */ }
+    let cancelled = false;
+    // Restore outside the effect body so React never sees a synchronous
+    // setState during the commit phase (lint: set-state-in-effect).
+    queueMicrotask(() => {
+      if (cancelled) return;
+      try {
+        const raw = window.localStorage.getItem(STORAGE_KEY);
+        if (raw) setUser(JSON.parse(raw) as DemoUser);
+      } catch { /* ignore corrupt state */ }
+    });
+    return () => { cancelled = true; };
   }, []);
 
   const login = useCallback((input: Omit<DemoUser, "loggedInAt">) => {
@@ -52,7 +59,7 @@ export function useRequireUser() {
   const { user } = useAuth();
   const [ready, setReady] = useState(false);
   useEffect(() => {
-    if (user !== null) { setReady(true); return; }
+    if (user !== null) { queueMicrotask(() => setReady(true)); return; }
     // Wait one tick so the localStorage restore effect can run first.
     const timer = setTimeout(() => {
       const next = window.location.pathname;

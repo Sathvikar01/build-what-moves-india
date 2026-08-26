@@ -5,7 +5,7 @@ import { pathLengthKm, routeOnRoads } from "./road-graph";
 export { haversineKm };
 
 export interface WorkStop {
-  id: string; kind: "bin" | "signal" | "report"; label: string; locality: string; location: GeoPoint;
+  id: string; kind: "bin" | "signal" | "report" | "pickup"; label: string; locality: string; location: GeoPoint;
   volumeLitres: number; serviceMinutes: number; priorityScore: number; binFill: number; citizenDemand: number;
   reportSeverity: number; urbanDensity: number; priorityFactors?: { key: string; contribution: number; explanation: string }[];
 }

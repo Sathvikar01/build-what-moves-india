@@ -2,17 +2,17 @@ import { optimizeRoutes, type OptimizeOptions, type WorkStop } from "../domain/o
 import type { RoutePlan } from "../domain/types";
 import { createDemoState, SYNTHETIC_SOURCE, toWorkStops } from "../data/demo";
 import { makeCitizenReport } from "../domain/simulate";
-import { binStatusFor, householdDump } from "../domain/simulate";
+import { binStatusFor, driftUserLocation, householdDump } from "../domain/simulate";
 import { pointAtDistance } from "../domain/road-graph";
 import { getRoadNetwork, realRoadTrip } from "./road-network";
-import { getCloudflareEnv } from "./cf";
 import type { DemoEvent, DemoState, WasteSignal } from "../domain/types";
 
-type UploadedAsset={contentType:string;bytes:Uint8Array;role:"citizen"|"collector";storedAt:string;storage:"r2"|"memory"};
-type StoreGlobal=typeof globalThis&{__wasteDemoState?:DemoState;__wasteIdempotency?:Map<string,unknown>;__wasteUploads?:Map<string,UploadedAsset>;__wasteJournalCursor?:number;__wasteDayEngine?:ReturnType<typeof setInterval>};
+type UploadedAsset={contentType:string;bytes:Uint8Array;role:"citizen"|"collector"|"system";storedAt:string;storage:"memory"};
+type StoreGlobal=typeof globalThis&{__wasteDemoState?:DemoState;__wasteIdempotency?:Map<string,unknown>;__wasteUploads?:Map<string,UploadedAsset>;__wasteDayEngine?:ReturnType<typeof setInterval>;__wasteResetGeneration?:number};
 const root=globalThis as StoreGlobal;
 const IDEMPOTENCY_LIMIT=200;
-const UPLOAD_LIMIT=60;
+const UPLOAD_LIMIT=120;
+const EVENT_LIMIT=250;
 
 export function getState(){
   if(root.__wasteDemoState) return root.__wasteDemoState;
@@ -38,8 +38,10 @@ const DWELL_WALL_MS=4000;               // truck halts this long before emptying
 const DUMP_INTERVAL_WALL_MS=12000;      // a resident dumps waste roughly every 12s
 const OVERFLOW_FILL_PERCENT=100;        // overflow alert threshold
 const OVERFLOW_REPLAN_COOLDOWN_MS=15000; // batch overflow reroutes into one per window
+const USER_DRIFT_WALL_MS=40000;         // the mock citizen wanders roughly every 40s
 let lastDumpWallMs=0;let dumpSeq=0;
 let lastOverflowReplanWallMs=0;
+let lastUserDriftWallMs=Date.now();let userDriftSeq=0;
 // Bins that already raised an overflow alert; cleared when the bin is emptied
 // or the demo resets so a new episode can alert again.
 const alertedOverflowIds=new Set<string>();
@@ -57,7 +59,23 @@ function growBins(state:DemoState,simHours:number){
 
 function engineEvent(state:DemoState,type:string,entityId:string,message:string){append(state,type,entityId,message)}
 
-function append(state:DemoState,type:string,entityId:string,message:string){const cursor=(state.events.at(-1)?.cursor??0)+1;const item:DemoEvent={id:`evt-api-${cursor}-${crypto.randomUUID().slice(0,8)}`,cursor,type,entityId,version:1,occurredAt:state.now,message};state.events.push(item);return item}
+function append(state:DemoState,type:string,entityId:string,message:string){const cursor=(state.events.at(-1)?.cursor??0)+1;const item:DemoEvent={id:`evt-api-${cursor}-${crypto.randomUUID().slice(0,8)}`,cursor,type,entityId,version:1,occurredAt:state.now,message};state.events.push(item);if(state.events.length>EVENT_LIMIT)state.events.splice(0,state.events.length-EVENT_LIMIT);return item}
+
+// Labelled synthetic evidence used when the autonomous day-cycle engine
+// services a report stop without a human collector. The demo never shows a
+// cleanup confirmation without evidence, so the engine attaches clearly
+// labelled placeholder images instead of skipping the proof stage.
+const DEMO_EVIDENCE:{id:string;caption:string}[]=[
+  {id:"evidence/demo-before",caption:"SYNTHETIC DEMO EVIDENCE · BEFORE · auto-serviced by day-cycle engine"},
+  {id:"evidence/demo-after",caption:"SYNTHETIC DEMO EVIDENCE · AFTER · auto-serviced by day-cycle engine"},
+];
+function ensureDemoEvidence(){
+  for(const item of DEMO_EVIDENCE){
+    if(root.__wasteUploads?.has(item.id)) continue;
+    const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="640" height="420"><rect width="640" height="420" fill="#dcebe1"/><rect x="14" y="14" width="612" height="392" fill="none" stroke="#176b48" stroke-width="3" stroke-dasharray="10 7"/><text x="320" y="200" font-family="sans-serif" font-size="26" font-weight="700" fill="#14241c" text-anchor="middle">Synthetic demo evidence</text><text x="320" y="240" font-family="sans-serif" font-size="17" fill="#5d6c64" text-anchor="middle">${item.caption.split(" · ").slice(0,2).join(" · ")}</text><text x="320" y="272" font-family="sans-serif" font-size="15" fill="#5d6c64" text-anchor="middle">No camera capture — engine-serviced stop</text></svg>`;
+    registerUploadedAsset(item.id,{contentType:"image/svg+xml",bytes:new TextEncoder().encode(svg),role:"system",storedAt:new Date().toISOString(),storage:"memory"});
+  }
+}
 
 // ─── Routing helpers ─────────────────────────────────────────────────────────
 // Every plan leaves the store wearing real OSM geometry: the A* runs over the
@@ -228,6 +246,29 @@ function handleOverflows(state:DemoState){
   engineEvent(state,"route.revised",state.route.id,"Route revised: overflowed bins moved to the front of the round.");
 }
 
+// ─── Mock citizen live location ──────────────────────────────────────────────
+// The mock citizen wanders slowly around Whitefield. Every move updates the
+// state's userLocation and — while the truck is driving with this round's
+// handover still pending — re-runs ACO + A* so the vehicle follows the citizen.
+// Servicing/at-depot phases skip the mid-trip replan: the daily plan already
+// starts from the newest position.
+function maybeDriftUser(state:DemoState){
+  if(!state.userLocation) return;
+  const nowMs=Date.now();
+  if(nowMs-lastUserDriftWallMs<USER_DRIFT_WALL_MS) return;
+  lastUserDriftWallMs=nowMs;
+  const user=state.userLocation;
+  const step=driftUserLocation(user.location,userDriftSeq++);
+  user.location=step.location;user.updatedAt=state.now;
+  engineEvent(state,"citizen.location_updated",user.id,`Mock citizen moved ~${step.meters} m within Whitefield; live GPS updated.`);
+  if(state.dayCycle.phase!=="en_route") return;
+  const stops=state.route.routes[0]?.stops??[];
+  const pendingPickup=stops.find(s=>s.kind==="pickup"&&s.status!=="collected"&&s.status!=="blocked"&&s.status!=="skipped");
+  if(!pendingPickup) return;
+  state.route=replanMidTrip(state,"citizen_location_update");
+  engineEvent(state,"route.revised",state.route.id,"Route recomputed for the citizen's updated live location.");
+}
+
 function serviceCurrentStop(state:DemoState){
   const dc=state.dayCycle;
   const stops=state.route.routes[0]?.stops??[];
@@ -246,9 +287,24 @@ function serviceCurrentStop(state:DemoState){
   } else if(stop.kind==="signal"){
     state.signals=state.signals.map(s=>s.id===stop.workId?{...s,status:"collected"}:s);
     engineEvent(state,"signal.collected",stop.workId,`Citizen pickup at ${stop.label} completed.`);
+  } else if(stop.kind==="pickup"){
+    // The citizen handed over household waste at their live location: load it,
+    // mark today's handover done so the stop drops out of later replans.
+    const litres=stop.volumeLitres;
+    state.vehicles[0].loadLitres=Math.min(state.vehicles[0].capacityLitres,state.vehicles[0].loadLitres+litres);
+    dc.litresCollectedToday+=litres;
+    if(state.userLocation)state.userLocation.servedOnDay=dc.day;
+    engineEvent(state,"signal.collected",stop.workId,`Citizen handover completed at ${state.userLocation?.label??"the citizen's live location"}; ~${litres} L household waste loaded.`);
   } else {
+    // Report stops keep the same evidence lifecycle as manual collection:
+    // the engine records an accepted proof with labelled synthetic evidence
+    // instead of silently marking the report cleaned.
+    ensureDemoEvidence();
+    const [beforeAssetId,afterAssetId]=DEMO_EVIDENCE.map(e=>e.id);
+    state.proofs.unshift({id:`proof-auto-${crypto.randomUUID().slice(0,8)}`,reportId:stop.workId,stopId:stop.id,capturedAt:state.now,status:"accepted",beforeAssetId,afterAssetId,gps:stop.location,gpsMode:"demo",checklist:{segregated:true,areaSwept:true,accessClear:true},note:"Auto-serviced by the demo day-cycle engine; before/after images are labelled synthetic evidence, not camera captures.",source:SYNTHETIC_SOURCE});
     state.reports=state.reports.map(r=>r.id===stop.workId?{...r,status:"cleaned"}:r);
-    engineEvent(state,"report.cleaned",stop.workId,`Reported waste at ${stop.label} collected; awaiting citizen confirmation.`);
+    engineEvent(state,"cleanup.proof_accepted",stop.workId,`Reported waste at ${stop.label} collected by the city crew (auto-serviced); labelled synthetic evidence attached — awaiting citizen confirmation.`);
+    engineEvent(state,"notification.citizen",stop.workId,`Cleanup completed near you with verified evidence - confirm once the street looks clean.`);
   }
 }
 
@@ -266,6 +322,7 @@ function engineTick(){
       engineEvent(state,"waste.dumped",dump.binId,`Resident dumped ~${dump.litres} L at ${dump.binLabel}; bin now at ${after}%.`);
     }
   }
+  maybeDriftUser(state);
   handleOverflows(state);
   const pathEntry=state.route.roadPathByVehicle[0];
   const routeStops=state.route.routes[0]?.stops??[];
@@ -332,51 +389,83 @@ export function startDayEngine(){
   if(root.__wasteDayEngine) return;
   root.__wasteDayEngine=setInterval(()=>{try{engineTick()}catch{ /* keep the demo alive on tick errors */ }},ENGINE_INTERVAL_MS);
 }
-startDayEngine();
-
-// Best-effort persistence of the audit journal into Cloudflare D1. The
-// in-memory state stays the read path for the demo; the journal only makes the
-// audit trail survive worker isolate resets. Any failure is silently ignored.
-async function journalEvents(events:DemoEvent[]){
-  try{
-    const env=await getCloudflareEnv();
-    const db=env?.DB;
-    if(!db) return;
-    const { drizzle } = await import("drizzle-orm/d1");
-    const { eventJournal } = await import("../../db/schema");
-    const database=drizzle(db as never);
-    const last=root.__wasteJournalCursor??0;
-    const pending=events.filter(e=>e.cursor>last);
-    if(!pending.length) return;
-    await database.insert(eventJournal).values(pending.map(e=>({id:e.id,topic:"mahadevapura",type:e.type,entityType:"demo",entityId:e.entityId,entityVersion:e.version,occurredAt:e.occurredAt,payload:{message:e.message} as Record<string,unknown>}))).onConflictDoNothing();
-    root.__wasteJournalCursor=pending.at(-1)!.cursor;
-  }catch{ /* memory-only demo mode */ }
+// Only run the live engine inside the Node server runtime — never during
+// `next build` static analysis, where a ticking interval would be discarded
+// anyway and could leave build workers holding timers.
+if(process.env.NEXT_PHASE!=="phase-production-build"&&process.env.NEXT_RUNTIME!=="edge"){
+  startDayEngine();
 }
 
-export function setState(state:DemoState){root.__wasteDemoState=state;void journalEvents(state.events);return state}
+export function setState(state:DemoState){root.__wasteDemoState=state;return state}
 
 export function reset(){
   alertedOverflowIds.clear();
   matrixRoot.__wasteMatrixJob=undefined;
-  const generation=(getState().tick??0)+1;
+  lastUserDriftWallMs=Date.now();
+  const generation=(root.__wasteResetGeneration??0)+1;
+  root.__wasteResetGeneration=generation;
   const next=createDemoState();
   next.route=withRealRoadGeometry(next,next.route);
+  // Fresh scenario: drop demo-scoped uploads so orphaned evidence cannot be
+  // referenced by the reset state; event cursors keep climbing so sync
+  // clients stay correctly ordered across resets.
+  root.__wasteUploads=new Map();
   next.events[0]={...next.events[0],id:`evt-api-reset-${generation}`,cursor:(getState().events.at(-1)?.cursor??0)+1};
   return setState(next);
 }
-export function tick(seconds=30){const state=structuredClone(getState());state.now=plusSeconds(state.now,seconds);append(state,"demo.ticked","scenario-mahadevapura",`Simulation advanced ${seconds} seconds.`);return setState(state)}
-export function createSignal(input:{type:"have_waste"|"waste_outside";category:string;amountBand:"small"|"medium"|"large";location:{lat:number;lng:number}}){const state=structuredClone(getState());const signal:WasteSignal={id:`sig-api-${state.signals.length+1}`,type:input.type,category:input.category,amountBand:input.amountBand,locality:"Whitefield",location:input.location,status:"queued",createdAt:state.now,etaMinutes:9,source:SYNTHETIC_SOURCE};state.signals.unshift(signal);append(state,"signal.created",signal.id,"Citizen signal received.");state.route=replanMidTrip(state,"new_citizen_signal");append(state,"route.revised",state.route.id,"Route recomputed after citizen demand.");setState(state);return {signal,etaMinutes:9,route:state.route}}
+export function tick(seconds=30){const state=structuredClone(getState());state.now=plusSeconds(state.now,seconds);state.tick=(state.tick??0)+1;append(state,"demo.ticked","scenario-mahadevapura",`Simulation advanced ${seconds} seconds (tick ${state.tick}).`);return setState(state)}
+export function createSignal(input:{type:"have_waste"|"waste_outside";category:string;amountBand:"small"|"medium"|"large";location:{lat:number;lng:number}}){const state=structuredClone(getState());const signal:WasteSignal={id:`sig-api-${crypto.randomUUID().slice(0,8)}`,type:input.type,category:input.category,amountBand:input.amountBand,locality:"Whitefield",location:input.location,status:"queued",createdAt:state.now,etaMinutes:9,source:SYNTHETIC_SOURCE};state.signals.unshift(signal);append(state,"signal.created",signal.id,"Citizen signal received.");state.route=replanMidTrip(state,"new_citizen_signal");append(state,"route.revised",state.route.id,"Route recomputed after citizen demand.");setState(state);return {signal,etaMinutes:9,route:state.route}}
 
-export function createReport(input:{title:string;category:string;location:{lat:number;lng:number};hygiene:"none"|"low"|"moderate"|"high"|"severe";obstruction:"none"|"partial"|"significant"|"traffic_lane";photoAssetId:string}){if(!hasUploadedAsset(input.photoAssetId,"citizen"))throw new Error("REPORT_ASSET_NOT_FOUND");const state=structuredClone(getState());const id=`rep-api-${state.reports.length+1}`;const report=makeCitizenReport({id,title:input.title,category:input.category,location:input.location,photoUrl:input.photoAssetId,hygiene:input.hygiene==="none"?"low":input.hygiene,obstruction:input.obstruction,now:state.now,source:SYNTHETIC_SOURCE});state.reports.unshift(report);append(state,"report.submitted",id,"Citizen report submitted with persisted photo and priority audit.");append(state,"priority.updated",id,`Priority calculated at ${report.priority.audit.effectiveScore}.`);state.route=replanMidTrip(state,"new_garbage_report");append(state,"route.revised",state.route.id,"Route revised after report.");setState(state);return {report,priority:report.priority,route:state.route}}
+export function createReport(input:{title:string;category:string;location:{lat:number;lng:number};hygiene:"none"|"low"|"moderate"|"high"|"severe";obstruction:"none"|"partial"|"significant"|"traffic_lane";photoAssetId:string}){if(!hasUploadedAsset(input.photoAssetId,"citizen"))throw new Error("REPORT_ASSET_NOT_FOUND");const state=structuredClone(getState());const id=`rep-api-${crypto.randomUUID().slice(0,8)}`;const report=makeCitizenReport({id,title:input.title,category:input.category,location:input.location,photoUrl:input.photoAssetId,hygiene:input.hygiene==="none"?"low":input.hygiene,obstruction:input.obstruction,now:state.now,source:SYNTHETIC_SOURCE});state.reports.unshift(report);append(state,"report.submitted",id,"Citizen report submitted with persisted photo and priority audit.");append(state,"priority.updated",id,`Priority calculated at ${report.priority.audit.effectiveScore}.`);state.route=replanMidTrip(state,"new_garbage_report");append(state,"route.revised",state.route.id,"Route revised after report.");setState(state);return {report,priority:report.priority,route:state.route}}
 export function reoptimize(trigger="manual"){const state=structuredClone(getState());state.route=replanMidTrip(state,trigger);append(state,"route.revised",state.route.id,`Route revised: ${trigger}.`);setState(state);return state.route}
 export function publish(){const state=structuredClone(getState());state.route={...state.route,status:"published",version:state.route.version+1};append(state,"route.published",state.route.id,"Route revision published to collectors.");setState(state);return state.route}
-export function actOnStop(stopId:string,action:"arrived"|"blocked"|"collected"){const state=structuredClone(getState());let workId="";let found=false;state.route.routes=state.route.routes.map(route=>({...route,stops:route.stops.map(stop=>{if(stop.id!==stopId)return stop;found=true;workId=stop.workId;if(action==="collected"&&stop.status!=="arrived")throw new Error("INVALID_STATUS_TRANSITION");if(action==="arrived"&&!(["pending","en_route"] as string[]).includes(stop.status))throw new Error("INVALID_STATUS_TRANSITION");return {...stop,status:action}})}));if(!found)throw new Error("NOT_FOUND");if(action==="collected"){state.signals=state.signals.map(s=>s.id===workId?{...s,status:"collected"}:s);const report=state.reports.find(r=>r.id===workId);if(report)state.proofs.unshift({id:`proof-api-${state.proofs.length+1}`,reportId:workId,stopId,capturedAt:state.now,status:"pending_sync",note:"Collection recorded; evidence is still required.",source:SYNTHETIC_SOURCE})}if(action==="blocked"){const blocked=workId;state.route=replanMidTrip(state,"blocked_access");state.route.unassigned.push({id:blocked,reason:"Collector reported blocked access; dispatch review required"});append(state,"route.revised",state.route.id,"Route suffix revised after blocked access.")}append(state,`route_stop.${action}`,stopId,`Collector marked stop ${action}.`);const citizenFacing=state.signals.some(s=>s.id===workId)||state.reports.some(r=>r.id===workId);if(citizenFacing){append(state,"notification.citizen",workId,action==="collected"?"Truck collected waste near you - confirm the cleanup once it looks clean.":"The collector could not access the site near you. BBMP dispatch has been notified.")}setState(state);return {stopId,workId,action,proofRequired:action==="collected"&&state.reports.some(r=>r.id===workId),report:state.reports.find(r=>r.id===workId)}}
+export function actOnStop(stopId:string,action:"arrived"|"blocked"|"collected"){
+  const state=structuredClone(getState());
+  let workId="";let found=false;let kind="unknown";let previous="";
+  state.route.routes=state.route.routes.map(route=>({...route,stops:route.stops.map(stop=>{
+    if(stop.id!==stopId)return stop;
+    found=true;workId=stop.workId;kind=stop.kind;previous=stop.status;
+    // Lifecycle guards: collected only after arriving; arrived only from an
+    // un-started stop; blocked allowed until the work is done, never after.
+    if(action==="collected"&&previous!=="arrived")throw new Error("INVALID_STATUS_TRANSITION");
+    if(action==="arrived"&&!(["pending","en_route"] as string[]).includes(previous))throw new Error("INVALID_STATUS_TRANSITION");
+    if(action==="blocked"&&(["collected","skipped","blocked"] as string[]).includes(previous))throw new Error("INVALID_STATUS_TRANSITION");
+    return {...stop,status:action};
+  })}));
+  if(!found)throw new Error("NOT_FOUND");
+  if(action==="collected"){
+    state.signals=state.signals.map(s=>s.id===workId?{...s,status:"collected"}:s);
+    if(kind==="bin"){
+      // Manual collection must have the same physical effect as the engine:
+      // empty the bin, load the truck, and move the day-cycle counters.
+      const bin=state.bins.find(b=>b.id===workId);
+      const vehicle=state.vehicles[0];const dc=state.dayCycle;
+      if(bin&&vehicle&&dc){
+        const litres=Math.round(bin.capacityLitres*bin.fillPercent/100);
+        bin.fillPercent=0;bin.status="available";bin.lastUpdatedAt=state.now;delete bin.overflowedAt;alertedOverflowIds.delete(bin.id);
+        vehicle.loadLitres=Math.min(vehicle.capacityLitres,vehicle.loadLitres+litres);
+        dc.litresCollectedToday+=litres;dc.binsServicedToday++;dc.binsServicedTotal++;
+        append(state,"bin.collected",bin.id,`Collector emptied ${bin.label}: ${litres} L loaded; bin reset to 0%.`);
+      }
+    }
+    const report=state.reports.find(r=>r.id===workId);
+    if(report)state.proofs.unshift({id:`proof-api-${crypto.randomUUID().slice(0,8)}`,reportId:workId,stopId,capturedAt:state.now,status:"pending_sync",note:"Collection recorded; before/after evidence is still required.",source:SYNTHETIC_SOURCE});
+    if(kind==="signal")append(state,"signal.collected",workId,"Citizen pickup recorded by the collector.");
+  }
+  if(action==="blocked"){const blocked=workId;state.route=replanMidTrip(state,"blocked_access");state.route.unassigned.push({id:blocked,reason:"Collector reported blocked access; dispatch review required"});append(state,"route.revised",state.route.id,"Route suffix revised after blocked access.")}
+  append(state,`route_stop.${action}`,stopId,`Collector marked stop ${action}.`);
+  const citizenFacing=state.signals.some(s=>s.id===workId)||state.reports.some(r=>r.id===workId);
+  if(citizenFacing){append(state,"notification.citizen",workId,action==="collected"?"Truck collected waste near you - confirm the cleanup once it looks clean.":"The collector could not access the site near you. BBMP dispatch has been notified.")}
+  setState(state);
+  return {stopId,workId,action,proofRequired:action==="collected"&&state.reports.some(r=>r.id===workId),report:state.reports.find(r=>r.id===workId)};
+}
 
 export function acceptProof(stopId:string,input:{beforeAssetId:string;afterAssetId:string;gps:{lat:number;lng:number};gpsMode:"captured"|"demo";checklist:Record<string,boolean>}){const state=structuredClone(getState());const proof=state.proofs.find(p=>p.stopId===stopId&&p.status==="pending_sync");if(!proof)throw new Error("PROOF_NOT_PENDING");if(!input.beforeAssetId||!input.afterAssetId||!Object.values(input.checklist).every(Boolean))throw new Error("PROOF_INCOMPLETE");if(!hasUploadedAsset(input.beforeAssetId,"collector")||!hasUploadedAsset(input.afterAssetId,"collector"))throw new Error("PROOF_ASSET_NOT_FOUND");proof.status="accepted";proof.beforeAssetId=input.beforeAssetId;proof.afterAssetId=input.afterAssetId;proof.gps=input.gps;proof.gpsMode=input.gpsMode;proof.checklist=input.checklist;proof.note=`Before/after evidence accepted at ${input.gps.lat.toFixed(4)}, ${input.gps.lng.toFixed(4)} (${input.gpsMode==="demo"?"labelled demo stop coordinate":"device-captured GPS"}) with checklist.`;state.reports=state.reports.map(r=>r.id===proof.reportId?{...r,status:"cleaned"}:r);append(state,"cleanup.proof_accepted",proof.reportId,`Cleanup proof accepted after persisted evidence, ${input.gpsMode==="demo"?"labelled demo coordinates":"device-captured GPS"}, and checklist validation.`);setState(state);return {proof,report:state.reports.find(r=>r.id===proof.reportId)}}
 export function confirmReport(reportId:string,outcome:"cleaned"|"partial"|"still_present"){const state=structuredClone(getState());const report=state.reports.find(r=>r.id===reportId);if(!report)throw new Error("NOT_FOUND");if(report.status!=="cleaned")throw new Error("INVALID_STATUS_TRANSITION");report.status=outcome==="cleaned"?"confirmed":"reopened";append(state,outcome==="cleaned"?"report.confirmed":"report.reopened",reportId,outcome==="cleaned"?"Citizen confirmed cleanup.":"Citizen reopened incomplete cleanup.");if(outcome!=="cleaned")state.route=replanMidTrip(state,"citizen_reopened");setState(state);return report}
-export function idempotent<T>(key:string,work:()=>T):T{const cache=root.__wasteIdempotency??=new Map();if(cache.has(key))return cache.get(key) as T;const value=work();cache.set(key,value);if(cache.size>IDEMPOTENCY_LIMIT){const oldest=cache.keys().next().value;if(oldest!==undefined)cache.delete(oldest)}return value}
-export function hasUploadedAsset(id:string,role?:UploadedAsset["role"]){const asset=root.__wasteUploads?.get(id);return Boolean(asset&&(!role||asset.role===role)&&asset.bytes.byteLength>0)}
-export function registerUploadedAsset(id:string,asset:UploadedAsset){const cache=root.__wasteUploads??=new Map();if(cache.size>=UPLOAD_LIMIT){const oldest=cache.keys().next().value;if(oldest!==undefined)cache.delete(oldest)}cache.set(id,asset)}
+export function idempotent<T>(key:string,work:()=>T):T{const cache=root.__wasteIdempotency??=new Map();const cached=cache.get(key);if(cached!==undefined){/* LRU: refresh recency so active keys are never evicted */cache.delete(key);cache.set(key,cached);return cached as T}const value=work();cache.set(key,value);if(cache.size>IDEMPOTENCY_LIMIT){const oldest=cache.keys().next().value;if(oldest!==undefined)cache.delete(oldest)}return value}
+export function hasUploadedAsset(id:string,role?:UploadedAsset["role"]){const cache=root.__wasteUploads;const asset=cache?.get(id);if(!asset)return false;if(role&&role!=="system"&&asset.role!==role&&asset.role!=="system")return false;/* LRU touch */if(cache){cache.delete(id);cache.set(id,asset)}return asset.bytes.byteLength>0}
+export function getUploadedAsset(id:string){return root.__wasteUploads?.get(id)??null}
+export function registerUploadedAsset(id:string,asset:UploadedAsset){const cache=root.__wasteUploads??=new Map();if(cache.has(id))cache.delete(id);cache.set(id,asset);while(cache.size>UPLOAD_LIMIT){const oldest=cache.keys().next().value;if(oldest===undefined)break;cache.delete(oldest)}}
 
 
 

@@ -2,7 +2,7 @@ import { calculatePriority } from "../domain/priority";
 import { optimizeRoutes, type WorkStop } from "../domain/optimizer";
 import { recommendBins, type PlacementCandidateInput } from "../domain/placement";
 import type { DemoState, GarbageReport, SmartBin, SourceMeta, Vehicle, WasteSignal } from "../domain/types";
-import { FOCUS } from "./locations";
+import { MOCK_USER_LOCATION } from "./locations";
 
 export const DEMO_NOW = "2026-08-21T12:00:00.000Z";
 export const SYNTHETIC_SOURCE: SourceMeta = { kind:"synthetic_demo", label:"Deterministic hackathon scenario · seed 4242", isSynthetic:true };
@@ -43,10 +43,22 @@ const signals:WasteSignal[]=[
   ["sig-05","have_waste","dry","small","Bellanduru",12.9271,77.6782,20],["sig-06","waste_outside","mixed","medium","Dodda Nekkundi",12.9790,77.6956,18],
 ].map(([id,type,category,amountBand,locality,lat,lng,eta])=>({id:id as string,type:type as WasteSignal["type"],category:category as string,amountBand:amountBand as WasteSignal["amountBand"],locality:locality as string,location:{lat:lat as number,lng:lng as number},status:"queued" as const,createdAt:"2026-08-21T11:35:00.000Z",etaMinutes:eta as number,source:SYNTHETIC_SOURCE}));
 
+// The mock citizen starts every scenario at the shared MOCK_USER_LOCATION and
+// the day-cycle engine drifts it from there (see src/domain/simulate.ts).
+const initialUserLocation:DemoState["userLocation"]={id:"user-live",label:"Mock citizen · live GPS",locality:"Whitefield",location:{...MOCK_USER_LOCATION},updatedAt:DEMO_NOW,source:SYNTHETIC_SOURCE};
+
 function workStops():WorkStop[]{
   const reportStops=reports.slice(0,5).map(r=>({id:r.id,kind:"report" as const,label:r.title,locality:r.locality,location:r.location,volumeLitres:Math.max(220,r.priority.audit.factors[0].rawValue as number),serviceMinutes:8,priorityScore:r.priority.audit.effectiveScore,binFill:(r.priority.audit.factors.find(f=>f.key==="nearbyBinFill")?.normalizedValue??0),citizenDemand:(r.priority.audit.factors.find(f=>f.key==="activeCitizenDemand")?.normalizedValue??0),reportSeverity:r.priority.audit.effectiveScore/100,urbanDensity:r.priority.audit.factors.find(f=>f.key==="density")?.normalizedValue??.5,priorityFactors:r.priority.audit.factors.map(f=>({key:f.key,contribution:f.contribution,explanation:f.explanation}))}));
   const binStops=bins.filter(b=>b.fillPercent>=80).map(b=>({id:b.id,kind:"bin" as const,label:b.label,locality:b.locality,location:b.location,volumeLitres:b.capacityLitres*b.fillPercent/100,serviceMinutes:6,priorityScore:b.fillPercent,binFill:b.fillPercent/100,citizenDemand:.35,reportSeverity:.25,urbanDensity:.72}));
-  return [...reportStops,...binStops];
+  return [...reportStops,...binStops,...(initialUserLocation?[userPickupStop(initialUserLocation)]:[])];
+}
+
+// The mock citizen's live position enters every plan as a normal-priority
+// "pickup" work stop (same weight band as a have_waste citizen signal), so ACO
+// orders it by the same density/distance trade-off as every other stop. It is
+// skipped for the rest of the simulated day once the truck completes it.
+export function userPickupStop(user:NonNullable<DemoState["userLocation"]>):WorkStop{
+  return {id:"user-pickup",kind:"pickup",label:`Citizen handover at ${user.label}`,locality:user.locality,location:user.location,volumeLitres:70,serviceMinutes:5,priorityScore:55,binFill:.45,citizenDemand:1,reportSeverity:.35,urbanDensity:.88};
 }
 
 const placementCandidates:PlacementCandidateInput[]=[
@@ -62,10 +74,11 @@ const placementCandidates:PlacementCandidateInput[]=[
 
 export function createDemoState():DemoState{
   const route={...optimizeRoutes(vehicles,workStops(),"seed_reset",4242),id:"route-4242",status:"active" as const};
-  return {seed:4242,now:DEMO_NOW,tick:0,vehicles:structuredClone(vehicles),bins:structuredClone(bins),signals:structuredClone(signals),reports:structuredClone(reports),route,recommendations:recommendBins(placementCandidates,6),proofs:[],dumps:[],events:[{id:"evt-1",cursor:1,type:"demo.reset",entityId:"scenario-mahadevapura",version:1,occurredAt:DEMO_NOW,message:"Deterministic Mahadevapura scenario loaded with seed 4242."}],lastAction:"Scenario ready",dayCycle:{day:1,phase:"en_route",progressKm:0,nextStopIndex:0,dwellUntilWallMs:0,dayStartedAt:DEMO_NOW,litresCollectedToday:0,binsServicedToday:0,binsServicedTotal:0,nextDepartureInMinutes:0}};
+  return {seed:4242,now:DEMO_NOW,tick:0,vehicles:structuredClone(vehicles),bins:structuredClone(bins),signals:structuredClone(signals),reports:structuredClone(reports),route,recommendations:recommendBins(placementCandidates,6),proofs:[],dumps:[],userLocation:structuredClone(initialUserLocation),events:[{id:"evt-1",cursor:1,type:"demo.reset",entityId:"scenario-mahadevapura",version:1,occurredAt:DEMO_NOW,message:"Deterministic Mahadevapura scenario loaded with seed 4242."}],lastAction:"Scenario ready",dayCycle:{day:1,phase:"en_route",progressKm:0,nextStopIndex:0,dwellUntilWallMs:0,dayStartedAt:DEMO_NOW,litresCollectedToday:0,binsServicedToday:0,binsServicedTotal:0,nextDepartureInMinutes:0}};
 }
 
 export function toWorkStops(state:DemoState):WorkStop[]{
   const factor=(r:GarbageReport,key:string)=>r.priority.audit.factors.find(f=>f.key===key)?.normalizedValue??0;
-  return [...state.reports.filter(r=>!["confirmed","cleaned"].includes(r.status)).map(r=>({id:r.id,kind:"report" as const,label:r.title,locality:r.locality,location:r.location,volumeLitres:Number(r.priority.audit.factors.find(f=>f.key==="garbageAmount")?.rawValue??200),serviceMinutes:8,priorityScore:r.priority.audit.effectiveScore,binFill:factor(r,"nearbyBinFill"),citizenDemand:factor(r,"activeCitizenDemand"),reportSeverity:r.priority.audit.effectiveScore/100,urbanDensity:factor(r,"density"),priorityFactors:r.priority.audit.factors.map(f=>({key:f.key,contribution:f.contribution,explanation:f.explanation}))})),...state.signals.filter(s=>s.status!=="collected").map(s=>({id:s.id,kind:"signal" as const,label:s.type==="waste_outside"?"Waste ready outside":"Citizen pickup request",locality:s.locality,location:s.location,volumeLitres:s.amountBand==="large"?300:s.amountBand==="medium"?160:70,serviceMinutes:5,priorityScore:s.type==="waste_outside"?72:55,binFill:.45,citizenDemand:1,reportSeverity:s.type==="waste_outside"?.65:.35,urbanDensity:.88})),...state.bins.filter(b=>b.fillPercent>=80).map(b=>({id:b.id,kind:"bin" as const,label:b.label,locality:b.locality,location:b.location,volumeLitres:b.capacityLitres*b.fillPercent/100,serviceMinutes:6,priorityScore:b.fillPercent,binFill:b.fillPercent/100,citizenDemand:.35,reportSeverity:.25,urbanDensity:.72}))];
+  const pickup=state.userLocation&&state.userLocation.servedOnDay!==state.dayCycle.day?userPickupStop(state.userLocation):null;
+  return [...state.reports.filter(r=>!["confirmed","cleaned"].includes(r.status)).map(r=>({id:r.id,kind:"report" as const,label:r.title,locality:r.locality,location:r.location,volumeLitres:Number(r.priority.audit.factors.find(f=>f.key==="garbageAmount")?.rawValue??200),serviceMinutes:8,priorityScore:r.priority.audit.effectiveScore,binFill:factor(r,"nearbyBinFill"),citizenDemand:factor(r,"activeCitizenDemand"),reportSeverity:r.priority.audit.effectiveScore/100,urbanDensity:factor(r,"density"),priorityFactors:r.priority.audit.factors.map(f=>({key:f.key,contribution:f.contribution,explanation:f.explanation}))})),...state.signals.filter(s=>s.status!=="collected").map(s=>({id:s.id,kind:"signal" as const,label:s.type==="waste_outside"?"Waste ready outside":"Citizen pickup request",locality:s.locality,location:s.location,volumeLitres:s.amountBand==="large"?300:s.amountBand==="medium"?160:70,serviceMinutes:5,priorityScore:s.type==="waste_outside"?72:55,binFill:.45,citizenDemand:1,reportSeverity:s.type==="waste_outside"?.65:.35,urbanDensity:.88})),...state.bins.filter(b=>b.fillPercent>=80).map(b=>({id:b.id,kind:"bin" as const,label:b.label,locality:b.locality,location:b.location,volumeLitres:b.capacityLitres*b.fillPercent/100,serviceMinutes:6,priorityScore:b.fillPercent,binFill:b.fillPercent/100,citizenDemand:.35,reportSeverity:.25,urbanDensity:.72})),...(pickup?[pickup]:[])];
 }

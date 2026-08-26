@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { CircleMarker, LayerGroup, Map as LeafletMap, Marker, Polyline } from "leaflet";
 import { MAP_ATTRIBUTION, MAP_TILE_URL } from "../config/map";
-import { MAHADEVAPURA_CENTER } from "../data/locations";
+import { MAHADEVAPURA_CENTER, MOCK_USER_LOCATION } from "../data/locations";
 import { pointAtDistance, slicePath } from "../domain/road-graph";
 import { haversineKm } from "../domain/geo";
 import type { GeoPoint } from "../domain/types";
@@ -13,7 +13,7 @@ export type MapMarker = {
   id: string;
   label: string;
   location: GeoPoint;
-  kind: "vehicle" | "bin" | "report" | "signal" | "recommendation" | "user";
+  kind: "vehicle" | "bin" | "report" | "signal" | "recommendation" | "user" | "pickup";
   detail?: string;
   overflow?: boolean; // bin at 100% — drawn red with a pulse
 };
@@ -23,7 +23,7 @@ export type VehicleRoadPath = { vehicleId: string; path: GeoPoint[]; stopDistanc
 // Mock citizen position near Whitefield (demo seed area). The pilot's scenario
 // geography is Mahadevapura, so "my location" is spawned inside the pilot zone
 // and clearly labelled as mock.
-export const MOCK_USER_LOCATION: GeoPoint = { lat: 12.9722, lng: 77.7465 };
+export { MOCK_USER_LOCATION };
 
 type MapStatus = "loading" | "ready" | "error";
 type RoutePath = { points: GeoPoint[]; totalKm: number; stops: number[] };
@@ -54,7 +54,7 @@ export function BengaluruMap({ markers, route = [], vehiclePaths, geometrySource
 
   useEffect(() => {
     let disposed = false;
-    setStatus("loading");
+    queueMicrotask(() => { if (!disposed) setStatus("loading"); });
     hasFittedRef.current = false;
 
     (async () => {
@@ -170,7 +170,7 @@ export function BengaluruMap({ markers, route = [], vehiclePaths, geometrySource
     }
 
     // These mirror the :root tokens in app/globals.css (--green, --amber, --red, --focus, --recommendation).
-    const colors = { vehicle: "#176b48", bin: "#bd6b19", report: "#b43d34", signal: "#146bd1", recommendation: "#6d4aa2", user: "#146bd1" } as const;
+    const colors = { vehicle: "#176b48", bin: "#bd6b19", report: "#b43d34", signal: "#146bd1", recommendation: "#6d4aa2", user: "#146bd1", pickup: "#0e8a7d" } as const;
 
     const statics = staticMarkersRef.current;
     const vehicles = vehiclesRef.current;
@@ -230,7 +230,7 @@ export function BengaluruMap({ markers, route = [], vehiclePaths, geometrySource
         L.marker([userLocation.lat, userLocation.lng], {
           icon: L.divIcon({ className: "user-dot-wrap", html: '<span class="user-dot"><i></i></span>', iconSize: [18, 18], iconAnchor: [9, 9] }),
           zIndexOffset: 500,
-        }).bindPopup("You are here (mock demo location · Whitefield)").addTo(userLayer);
+        }).bindPopup("You are here (mock live demo location · drifts within Whitefield)").addTo(userLayer);
       }
     }
 
@@ -360,7 +360,7 @@ export function BengaluruMap({ markers, route = [], vehiclePaths, geometrySource
         <summary>All map locations</summary>
         <ul>
           {userLocation && (
-            <li key="mock-user-location"><span className="legend-swatch user" /><span><b>you</b>, Your mock location · Whitefield (demo)</span></li>
+            <li key="mock-user-location"><span className="legend-swatch user" /><span><b>you</b>, Your mock live location · drifts within Whitefield (demo)</span></li>
           )}
           {markers.map((marker) => (
             marker.kind === "user" ? null : (

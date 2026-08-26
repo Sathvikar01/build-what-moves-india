@@ -7,6 +7,12 @@ import type { GeoPoint } from "../domain/types";
  */
 export const MAHADEVAPURA_CENTER: GeoPoint = { lat: 12.965, lng: 77.716 };
 
+// Mock citizen position near Whitefield (demo seed area). The pilot's scenario
+// geography is Mahadevapura, so "my location" spawns inside the pilot zone and
+// is clearly labelled as mock. The day-cycle engine drifts this point slowly;
+// the seeded scenario (src/data/demo.ts) starts every reset from exactly here.
+export const MOCK_USER_LOCATION: GeoPoint = { lat: 12.9722, lng: 77.7465 };
+
 export const MAHADEVAPURA_LOCATIONS = {
   whitefield: { label: "Whitefield", locality: "Whitefield", location: { lat: 12.9698, lng: 77.7499 } },
   kundalahalli: { label: "Kundalahalli", locality: "Kundalahalli", location: { lat: 12.9705, lng: 77.7151 } },

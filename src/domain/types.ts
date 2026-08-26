@@ -33,7 +33,7 @@ export interface GarbageReport {
 export type RouteSignalName = "smartBinFill" | "citizenDemand" | "reportSeverity" | "urbanDensity" | "travelEfficiency";
 export interface RouteContribution { signal: RouteSignalName; label: string; value: number; weight: number; contribution: number }
 export interface RouteStop {
-  id: string; workId: string; kind: "bin" | "signal" | "report"; label: string; locality: string; location: GeoPoint;
+  id: string; workId: string; kind: "bin" | "signal" | "report" | "pickup"; label: string; locality: string; location: GeoPoint;
   sequence: number; etaMinutes: number; serviceMinutes: number; volumeLitres: number;
   status: "pending" | "en_route" | "arrived" | "collected" | "blocked" | "skipped";
   priorityScore: number; contributions: RouteContribution[]; explanation: string; distanceKm: number; locked: boolean;
@@ -73,6 +73,19 @@ export interface CleanupProof { id: string; reportId: string; stopId: string; ca
 export interface WasteDump { id: string; binId: string; binLabel: string; locality: string; location: GeoPoint; litres: number; at: string }
 export interface DemoEvent { id: string; cursor: number; type: string; entityId: string; version: number; occurredAt: string; message: string }
 
+// The mock citizen's live position. Labelled synthetic telemetry: the day-cycle
+// engine drifts it around Whitefield, and it enters every route plan as a
+// "pickup" work stop so ACO/A* route the vehicle to the citizen too.
+// `servedOnDay` records the last day the truck completed that handover so the
+// stop disappears from later replans until the next simulated day.
+export interface UserLocation {
+  id: string; label: string; locality: string;
+  location: GeoPoint;
+  updatedAt: string;
+  servedOnDay?: number;
+  source: SourceMeta;
+}
+
 export interface DayCycle {
   day: number;
   phase: "en_route" | "servicing" | "at_depot";
@@ -90,5 +103,6 @@ export interface DemoState {
   seed: number; now: string; tick: number; vehicles: Vehicle[]; bins: SmartBin[]; signals: WasteSignal[];
   reports: GarbageReport[]; route: RoutePlan; recommendations: PlacementRecommendation[]; proofs: CleanupProof[];
   dumps: WasteDump[];
+  userLocation?: UserLocation;
   events: DemoEvent[]; selectedReportId?: string; lastAction: string; dayCycle: DayCycle;
 }
