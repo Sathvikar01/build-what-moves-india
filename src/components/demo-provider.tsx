@@ -11,9 +11,10 @@ type Locale = "en" | "kn";
 type DemoContextValue = {
   state: DemoState; locale: Locale; setLocale: (locale:Locale)=>void; reset:()=>void; tick:()=>void;
   lastError: string | null; clearError: ()=>void;
+  busy: boolean;
   signal:(type:WasteSignal["type"],location?:{lat:number;lng:number})=>void; report:(input:{title:string;category:string;hygiene:"low"|"moderate"|"high"|"severe";obstruction:"none"|"partial"|"significant"|"traffic_lane";location?:{lat:number;lng:number};photoUrl?:string})=>void;
   reoptimize:(trigger?:string)=>void; publishRoute:()=>void; selectReport:(id:string)=>void;
-  stopAction:(action:"arrived"|"collected"|"blocked")=>void; acceptProof:(input:{beforeAssetId:string;afterAssetId:string;gps:{lat:number;lng:number};gpsMode:"captured"|"demo";checklist:Record<string,boolean>})=>Promise<boolean>; confirmCleanup:(outcome:"cleaned"|"partial"|"still_present")=>void;
+  stopAction:(action:"arrived"|"collected"|"blocked")=>void; acceptProof:(input:{stopId?:string;beforeAssetId:string;afterAssetId:string;gps:{lat:number;lng:number};gpsMode:"captured"|"demo";checklist:Record<string,boolean>})=>Promise<boolean>; confirmCleanup:(outcome:"cleaned"|"partial"|"still_present")=>void;
 };
 
 const DemoContext=createContext<DemoContextValue|null>(null);
@@ -26,6 +27,7 @@ function preferredLocale():Locale{
 export function DemoProvider({children}:{children:ReactNode}){
   const [state,setState]=useState<DemoState>(()=>createDemoState());
   const [locale,setLocale]=useState<Locale>(preferredLocale);
+  const [busy,setBusy]=useState(false);
   const [lastError,setLastError]=useState<string|null>(null);
   const appliedSyncKey=useRef<string|null>(null);
   const inflight=useRef(0);
@@ -164,7 +166,7 @@ export function DemoProvider({children}:{children:ReactNode}){
     void push(`/api/reports/${targetId}/confirmation`,{outcome},"citizen");
   },[push,state.reports]);
 
-  const value=useMemo(()=>({state,locale,setLocale,reset,tick,lastError,clearError:()=>setLastError(null),signal,report,reoptimize,publishRoute,selectReport,stopAction,acceptProof,confirmCleanup}),[state,locale,reset,tick,lastError,signal,report,reoptimize,publishRoute,selectReport,stopAction,acceptProof,confirmCleanup]);
+  const value=useMemo(()=>({state,locale,setLocale,reset,tick,lastError,busy,clearError:()=>setLastError(null),signal,report,reoptimize,publishRoute,selectReport,stopAction,acceptProof,confirmCleanup}),[state,locale,reset,tick,lastError,busy,signal,report,reoptimize,publishRoute,selectReport,stopAction,acceptProof,confirmCleanup]);
   return <DemoContext.Provider value={value}>
     {lastError&&<div className="sync-error" role="alert"><span>{lastError}</span><button type="button" className="quiet-button" onClick={()=>setLastError(null)}>Dismiss</button></div>}
     {children}
