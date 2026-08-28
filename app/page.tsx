@@ -94,7 +94,7 @@ export default function Home() {
       {/* First screen IS the map. Content floats on glass above it. */}
       <section className="landing-hero" id="main-content">
         <div className="hero-map-layer" aria-hidden="false">
-          <BengaluruMap markers={landingMarkers} route={landingRoadRoute} vehiclePaths={[{ vehicleId: landingVehicle.id, path: landingRoadRoute }]} userLocation={seedState.userLocation?.location ?? MOCK_USER_LOCATION} height="100%" />
+          <BengaluruMap markers={landingMarkers} route={landingRoadRoute} vehiclePaths={[{ vehicleId: landingVehicle.id, path: landingRoadRoute }]} userLocation={seedState.userLocation?.location ?? MOCK_USER_LOCATION} height="100%" interactive={false} />
         </div>
         <div className="hero-overlay">
           <div className="hero-overlay-copy">

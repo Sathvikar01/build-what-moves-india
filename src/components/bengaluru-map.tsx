@@ -32,7 +32,7 @@ const TRUCK_SVG = `<div class="truck-marker"><svg viewBox="0 0 24 24" width="26"
 
 type VehicleEntry = { marker: Marker; bearing: number; lastLocation: GeoPoint | null };
 
-export function BengaluruMap({ markers, route = [], vehiclePaths, geometrySource = "synthetic_grid", tripStatus, height = 420, userLocation }: { markers: MapMarker[]; route?: GeoPoint[]; vehiclePaths?: VehicleRoadPath[]; geometrySource?: "osm_overpass" | "synthetic_grid"; tripStatus?: TripStatus | null; height?: number | string; userLocation?: GeoPoint | null }) {
+export function BengaluruMap({ markers, route = [], vehiclePaths, geometrySource = "synthetic_grid", tripStatus, height = 420, userLocation, interactive = true }: { markers: MapMarker[]; route?: GeoPoint[]; vehiclePaths?: VehicleRoadPath[]; geometrySource?: "osm_overpass" | "synthetic_grid"; tripStatus?: TripStatus | null; height?: number | string; userLocation?: GeoPoint | null; interactive?: boolean }) {
   // `route`/`vehiclePaths` come from the backend plan (ACO sequence → A* roads):
   // each path starts at the vehicle's current location, visits its stops in
   // ACO order, and returns to the origin. The map never re-plans.
@@ -62,7 +62,18 @@ export function BengaluruMap({ markers, route = [], vehiclePaths, geometrySource
         const L = await import("leaflet");
         if (disposed || !ref.current) return;
         leafletRef.current = L;
-        const map = L.map(ref.current, { zoomControl: true, attributionControl: true }).setView(
+        // `interactive: false` (hero backgrounds) releases wheel/touch/drag so
+        // the page scrolls over the map; markers stay clickable for popups.
+        const map = L.map(ref.current, {
+          zoomControl: interactive,
+          dragging: interactive,
+          scrollWheelZoom: interactive,
+          touchZoom: interactive,
+          doubleClickZoom: interactive,
+          boxZoom: interactive,
+          keyboard: interactive,
+          attributionControl: true,
+        }).setView(
           [MAHADEVAPURA_CENTER.lat, MAHADEVAPURA_CENTER.lng],
           13,
         );
