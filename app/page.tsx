@@ -42,6 +42,14 @@ const roleMeta = [
   { href: "/collector", key: "collector" as const, icon: Route },
 ];
 
+// Lime-highlight the payoff sentence of the hero headline (last ". " split;
+// copy without an inner sentence break renders plain).
+function HeroHeadline({ text }: { text: string }) {
+  const cut = text.lastIndexOf(". ");
+  if (cut < 0) return <>{text}</>;
+  return <>{text.slice(0, cut + 1)} <em>{text.slice(cut + 2)}</em></>;
+}
+
 export default function Home() {
   const { locale, setLocale } = useDemo();
   const copy = uiCopy[locale].landing;
@@ -57,6 +65,7 @@ export default function Home() {
   }, []);
   return (
     <main className="landing-shell" lang={locale === "kn" ? "kn" : "en"}>
+      <div className="hero-atmosphere" aria-hidden="true" />
       <a className="skip-link" href="#main-content">Skip to main content</a>
       <header className="site-header">
         <Link className="brand" href="/" aria-label="Bengaluru Smart Waste home">
@@ -73,9 +82,9 @@ export default function Home() {
 
       <section className="landing-hero" id="main-content">
         <div className="hero-copy">
-          <h1>{copy.hero}</h1>
-          <p>{copy.sub}</p>
-          <div className="hero-actions">
+          <h1 className="rise"><HeroHeadline text={copy.hero} /></h1>
+          <p className="rise rise-1">{copy.sub}</p>
+          <div className="hero-actions rise rise-2">
             <a className="landing-button landing-button-primary" href="/citizen" data-testid="hero-citizen">
               {copy.primaryAction} <ArrowRight size={18} aria-hidden="true" />
             </a>
@@ -85,7 +94,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="landing-map-panel">
+        <div className="landing-map-panel rise rise-3">
           <div className="map-panel-heading">
             <div>
               <MapPin size={18} aria-hidden="true" />
@@ -103,8 +112,8 @@ export default function Home() {
       </section>
 
       <section className="landing-truth-strip" aria-label="Demo data summary">
-        {copy.truth.map(([title, detail]) => (
-          <p key={title}><strong>{title}</strong><span>{detail}</span></p>
+        {copy.truth.map(([title, detail], index) => (
+          <p key={title} className={`rise rise-${Math.min(index + 1, 5)}`}><strong>{title}</strong><span>{detail}</span></p>
         ))}
       </section>
 
