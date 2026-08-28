@@ -1,9 +1,9 @@
-/* ============================================================================
-   COMMAND ATLAS — components
+/* ----
+   COMMAND ATLAS ---- components
    Floating glass chrome, map-first split shell, and every shared surface.
-   ========================================================================== */
+   ---- */
 
-/* ══ 1. Materials & panels ══════════════════════════════════════════════════ */
+/* ---- 1. Materials & panels ---- */
 
 .panel {
   background: var(--glass-bg);
@@ -11,15 +11,15 @@
   -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-edge);
   border-top-color: var(--glass-edge-hi);
-  border-radius: var(--r-lg);
-  padding: var(--space-5);
+  border-radius: 18px;
+  padding: var(--space-6);
   box-shadow: var(--shadow-1);
 }
 
-.section-heading { margin-bottom: var(--space-4); }
+.section-heading { margin-bottom: var(--space-5); }
 .section-heading h1,
-.section-heading h2 { font-size: 1.12rem; font-weight: 650; letter-spacing: -0.015em; }
-.section-heading p:not(.eyebrow) { margin: var(--space-2) 0 0; color: var(--text-mid); font-size: 0.86rem; }
+.section-heading h2 { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.02em; }
+.section-heading p:not(.eyebrow) { margin: var(--space-2) 0 0; color: var(--text-mid); font-size: 0.92rem; line-height: 1.5; }
 .split-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); }
 .split-heading > svg { flex: none; margin-top: var(--space-4); color: var(--text-lo); }
 
@@ -47,7 +47,7 @@
 .alert strong { display: block; font-size: 0.92rem; }
 .alert p { margin: 2px 0 0; color: var(--text-mid); font-size: 0.84rem; }
 
-/* ══ 2. Buttons — press feedback on every pressable surface ═════════════════ */
+/* ---- 2. Buttons ---- press feedback on every pressable surface ---- */
 
 .primary-button,
 .secondary-button,
@@ -58,12 +58,12 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  min-height: 46px;
+  min-height: 48px;
   padding: 0 var(--space-5);
   border-radius: var(--r-pill);
   border: 1px solid transparent;
-  font-weight: 650;
-  font-size: 0.92rem;
+  font-weight: 700;
+  font-size: 0.94rem;
   letter-spacing: 0.01em;
   text-decoration: none;
   cursor: pointer;
@@ -130,7 +130,7 @@
 .text-link { color: var(--text-mid); text-decoration: none; font-size: 0.88rem; transition: color var(--t-fast) var(--ease-out); }
 .text-link:hover { color: var(--lime); }
 
-/* ══ 3. Floating glass header ═══════════════════════════════════════════════ */
+/* ---- 3. Floating glass header ---- */
 
 .app-header {
   position: fixed;
@@ -249,7 +249,7 @@
 }
 .user-chip b { color: var(--lime); font-weight: 700; }
 
-/* ══ 4. Atlas split shell — map canvas + contextual rail ═══════════════════ */
+/* ---- 4. Atlas split shell ---- map canvas + contextual rail ---- */
 
 .atlas-main { min-height: 100dvh; padding-top: 64px; }
 .atlas-split {
@@ -287,9 +287,9 @@
 @starting-style { .atlas-rail > * { opacity: 0; transform: translateY(12px); } }
 @media (prefers-reduced-motion: reduce) { .atlas-rail > * { transition: none; } }
 
-.rail-hero { display: grid; gap: var(--space-2); }
-.rail-hero h1 { font-size: clamp(1.35rem, 2.2vw, 1.7rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.12; }
-.rail-hero > p { margin: 0; color: var(--text-mid); font-size: 0.88rem; }
+.rail-hero { display: grid; gap: var(--space-3); }
+.rail-hero h1 { font-size: clamp(1.5rem, 2.4vw, 1.9rem); font-weight: 700; letter-spacing: -0.025em; line-height: 1.1; }
+.rail-hero > p { margin: 0; color: var(--text-mid); font-size: 0.9rem; }
 
 .page-wrap { max-width: 1280px; margin: 0 auto; padding: var(--space-6) clamp(16px, 3.5vw, 44px) 80px; display: grid; gap: var(--space-4); }
 .narrow-wrap { max-width: 880px; }
@@ -339,7 +339,7 @@
 }
 .map-fallback strong { color: var(--text-hi); }
 
-/* ══ 5. Chips, badges, pills ════════════════════════════════════════════════ */
+/* ---- 5. Chips, badges, pills ---- */
 
 .status-chip {
   display: inline-flex;
@@ -379,7 +379,7 @@
   text-transform: uppercase;
   color: var(--text-mid);
 }
-.score-chip b { font-family: var(--font-display); font-size: 1.05rem; line-height: 1.1; letter-spacing: -0.02em; color: var(--text-hi); }
+.score-chip b { font-family: var(--font-display); font-size: 1.2rem; line-height: 1.1; letter-spacing: -0.02em; color: var(--text-hi); }
 .score-chip.band-high { border-color: rgba(240, 168, 60, 0.45); background: var(--amber-soft); }
 .score-chip.band-high b { color: var(--amber); }
 .score-chip.band-urgent { border-color: rgba(242, 109, 95, 0.45); background: var(--red-soft); }
@@ -418,7 +418,7 @@
 .live-pill i { width: 7px; height: 7px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 8px rgba(201, 242, 77, 0.9); animation: live-pulse 2s var(--ease-out) infinite; }
 @media (prefers-reduced-motion: reduce) { .live-pill i { animation: none; } }
 
-/* ══ 6. Forms ═══════════════════════════════════════════════════════════════ */
+/* ---- 6. Forms ---- */
 
 label { display: grid; gap: 7px; font-size: 0.8rem; font-weight: 650; color: var(--text-mid); min-width: 0; }
 input, select, textarea {
@@ -437,7 +437,7 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 
 .report-form, .two-column { display: grid; gap: var(--space-3); }
 
-/* ══ 7. Toasts & skeletons (@starting-style entries, interruptible) ════════ */
+/* ---- 7. Toasts & skeletons (@starting-style entries, interruptible) ---- */
 
 .toast-inline {
   display: flex;
@@ -467,7 +467,7 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) { .skeleton-line { animation: none; } }
 
-/* ══ 8. Why-drawer — explainability slide-over ══════════════════════════════ */
+/* ---- 8. Why-drawer ---- explainability slide-over ---- */
 
 .drawer-scrim {
   position: fixed;
@@ -537,7 +537,7 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
   @starting-style { .drawer { transform: translateY(105%); } }
 }
 
-/* ══ 9. KPI & impact strips ═════════════════════════════════════════════════ */
+/* ---- 9. KPI & impact strips ---- */
 
 .impact-strip {
   display: grid;
@@ -556,23 +556,28 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 .kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); }
 .kpi-card {
   display: flex;
-  gap: var(--space-3);
+  gap: var(--space-4);
   align-items: flex-start;
-  padding: var(--space-4);
-  border-radius: var(--r-md);
+  padding: var(--space-5);
+  border-radius: 18px;
   border: 1px solid var(--line);
   border-top-color: var(--glass-edge-hi);
   background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   box-shadow: var(--shadow-1);
+  transition: transform var(--t-med) var(--ease-out), border-color var(--t-med) var(--ease-out);
 }
-.kpi-card > span { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: var(--r-md); background: var(--lime-soft); color: var(--lime); }
+@media (hover: hover) and (pointer: fine) { .kpi-card:hover { transform: translateY(-2px); border-color: var(--line-strong); } }
+.kpi-card > span { display: grid; place-items: center; flex: none; width: 46px; height: 46px; border-radius: 14px; background: var(--lime-soft); color: var(--lime); }
+.kpi-card > span.tone-red { background: var(--red-soft); color: var(--red); }
+.kpi-card > span.tone-amber { background: var(--amber-soft); color: var(--amber); }
+.kpi-card > span.tone-teal { background: var(--teal-soft); color: var(--teal); }
 .kpi-card p { margin: 0; color: var(--text-lo); font-size: 0.74rem; font-weight: 650; letter-spacing: 0.05em; text-transform: uppercase; }
-.kpi-card strong { display: block; font-family: var(--font-display); font-size: 1.9rem; font-weight: 700; letter-spacing: -0.025em; font-variant-numeric: tabular-nums; line-height: 1.1; }
-.kpi-card small { display: block; color: var(--text-lo); font-size: 0.74rem; }
+.kpi-card strong { display: block; font-family: var(--font-display); font-size: 2.5rem; font-weight: 700; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; line-height: 1.05; }
+.kpi-card small { display: block; margin-top: 2px; color: var(--text-lo); font-size: 0.78rem; }
 
-/* ══ 10. Priority queue & audit ═════════════════════════════════════════════ */
+/* ---- 10. Priority queue & audit ---- */
 
 .queue-list { display: grid; gap: var(--space-2); }
 .queue-row {
@@ -664,7 +669,7 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 }
 .contribution-row b { font-family: var(--font-display); color: var(--lime); font-variant-numeric: tabular-nums; }
 
-/* ══ 11. Tables ═════════════════════════════════════════════════════════════ */
+/* ---- 11. Tables ---- */
 
 .table-scroll { overflow-x: auto; border-radius: var(--r-md); border: 1px solid var(--line); }
 .data-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; min-width: 640px; }
@@ -732,9 +737,9 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 .upload-drop input[type="file"] { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .upload-drop strong { font-size: 0.86rem; color: var(--text-hi); }
 
-/* ══ 12. Citizen surfaces ═══════════════════════════════════════════════════ */
+/* ---- 12. Citizen surfaces ---- */
 
-/* Step flow: Signal → Track → Confirm, one focused panel per step */
+/* Step flow: Signal ---- Track ---- Confirm, one focused panel per step */
 .flow-tabs {
   position: sticky;
   top: 76px;
@@ -755,14 +760,14 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
   align-items: center;
   justify-content: center;
   gap: 7px;
-  min-height: 42px;
+  min-height: 46px;
   padding: 0 var(--space-3);
   border: 0;
   border-radius: var(--r-pill);
   background: transparent;
   color: var(--text-mid);
-  font-size: 0.84rem;
-  font-weight: 650;
+  font-size: 0.9rem;
+  font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
   transition: background var(--t-fast) var(--ease-out), color var(--t-fast) var(--ease-out), transform var(--t-fast) var(--ease-out);
@@ -799,18 +804,19 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
   display: grid;
   grid-template-columns: auto auto 1fr;
   grid-template-rows: auto auto;
-  column-gap: var(--space-3);
+  column-gap: var(--space-4);
   align-items: center;
-  padding: var(--space-4) var(--space-5);
-  border-radius: var(--r-lg);
+  padding: var(--space-5) var(--space-6);
+  border-radius: 18px;
   border: 1px solid var(--lime-edge);
-  background: var(--lime-soft);
+  background: linear-gradient(135deg, rgba(201, 242, 77, 0.16), rgba(201, 242, 77, 0.07));
+  box-shadow: var(--shadow-lime);
   min-width: 240px;
 }
 .hero-eta svg { grid-row: 1 / 3; color: var(--lime); }
 .hero-eta span { color: var(--text-lo); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
-.hero-eta strong { font-family: var(--font-display); font-size: 1.9rem; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.1; }
-.hero-eta small { grid-column: 2 / 4; color: var(--text-mid); font-size: 0.76rem; }
+.hero-eta strong { font-family: var(--font-display); font-size: 2.6rem; font-weight: 700; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; line-height: 1.05; }
+.hero-eta small { grid-column: 2 / 4; color: var(--text-mid); font-size: 0.8rem; }
 
 .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
 .signal-card {
@@ -904,7 +910,7 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 .stepper-step.done span, .stepper-step.current span { color: var(--text-mid); }
 .stepper-step.current span { color: var(--lime); }
 
-/* ══ 13. Collector surfaces ═════════════════════════════════════════════════ */
+/* ---- 13. Collector surfaces ---- */
 
 .collector-summary { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
 .collector-summary h1 { font-size: clamp(1.5rem, 3vw, 2.1rem); font-weight: 700; letter-spacing: -0.025em; }
@@ -1022,7 +1028,7 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 }
 .replay-progress span { position: relative; z-index: 1; padding: 0 var(--space-4); color: var(--text-hi); font-size: 0.74rem; font-weight: 650; white-space: nowrap; }
 
-/* ══ 14. BBMP surfaces ══════════════════════════════════════════════════════ */
+/* ---- 14. BBMP surfaces ---- */
 
 .ops-nav {
   position: sticky;
@@ -1114,7 +1120,7 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 
 .route-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
 
-/* ══ 15. Landing ════════════════════════════════════════════════════════════ */
+/* ---- 15. Landing ---- */
 
 .landing-shell { position: relative; overflow-x: clip; }
 
@@ -1243,20 +1249,23 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 .scroll-cue { display: inline-flex; align-items: center; gap: 8px; color: var(--text-lo); font-size: 0.74rem; font-weight: 650; letter-spacing: 0.08em; text-transform: uppercase; }
 
 /* The civic loop: the product story, with live counts from the seed scenario */
+.loop-section { max-width: 1400px; margin: 0 auto; padding: var(--space-8) clamp(16px, 4vw, 56px) var(--space-5); }
+.loop-heading { display: grid; gap: var(--space-3); max-width: 760px; margin-bottom: var(--space-7); }
+.loop-heading .eyebrow { margin: 0; color: var(--lime); }
+.loop-heading h2 { font-size: clamp(1.9rem, 4vw, 3rem); font-weight: 700; letter-spacing: -0.03em; line-height: 1.04; }
 .loop-strip {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: var(--space-3);
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: var(--space-7) clamp(16px, 4vw, 56px) var(--space-4);
 }
-.loop-step { position: relative; padding: var(--space-5); border-radius: var(--r-lg); border: 1px solid var(--line); background: rgba(234, 243, 235, 0.03); }
-.loop-step i { position: absolute; top: var(--space-4); right: var(--space-4); font-family: var(--font-display); font-style: normal; font-size: 0.78rem; font-weight: 700; color: var(--text-lo); font-variant-numeric: tabular-nums; }
-.loop-step strong { display: block; font-size: 0.98rem; font-weight: 700; letter-spacing: -0.01em; }
-.loop-step b { display: block; margin-top: var(--space-3); font-family: var(--font-display); font-size: 2rem; font-weight: 700; color: var(--lime); line-height: 1; font-variant-numeric: tabular-nums; }
+.loop-step { position: relative; padding: var(--space-6) var(--space-5); border-radius: 18px; border: 1px solid var(--line); border-top-color: var(--glass-edge-hi); background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); box-shadow: var(--shadow-1); transition: transform var(--t-med) var(--ease-out), border-color var(--t-med) var(--ease-out); }
+@media (hover: hover) and (pointer: fine) { .loop-step:hover { transform: translateY(-3px); border-color: var(--lime-edge); } }
+.loop-step i { position: absolute; top: var(--space-5); right: var(--space-5); font-family: var(--font-display); font-style: normal; font-size: 0.8rem; font-weight: 700; color: var(--text-lo); font-variant-numeric: tabular-nums; }
+.loop-step strong { display: block; font-size: 1.02rem; font-weight: 700; letter-spacing: -0.01em; }
+.loop-step b { display: block; margin-top: var(--space-4); font-family: var(--font-display); font-size: clamp(2.6rem, 4vw, 3.4rem); font-weight: 700; color: var(--lime); line-height: 1; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; text-shadow: 0 0 32px rgba(201, 242, 77, 0.3); }
 .loop-step small { display: block; margin-top: 4px; color: var(--text-lo); font-size: 0.74rem; }
-.loop-step::after { content: "→"; position: absolute; top: 50%; right: calc(-1 * var(--space-3) - 1px); transform: translate(50%, -50%); z-index: 1; color: var(--text-lo); font-size: 0.9rem; }
+.loop-note { max-width: 1400px; margin: var(--space-4) auto 0; padding: 0 clamp(16px, 4vw, 56px); color: var(--text-lo); font-size: 0.78rem; text-align: center; }
+.loop-step::after { content: "→"; position: absolute; top: 50%; right: calc(-1 * var(--space-3) - 1px); transform: translate(50%, -50%); z-index: 1; color: var(--lime); font-size: 1.05rem; text-shadow: 0 0 12px rgba(201, 242, 77, 0.6); }
 .loop-step:last-child::after { display: none; }
 
 @media (max-width: 1100px) {
@@ -1321,7 +1330,7 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 .landing-footer p { margin: 0; }
 .landing-footer a { color: var(--text-mid); }
 
-/* ══ 16. Login ══════════════════════════════════════════════════════════════ */
+/* ---- 16. Login ---- */
 
 .login-shell {
   display: grid;
@@ -1364,7 +1373,7 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 .login-roles button span { min-width: 0; }
 .login-roles small { display: block; margin-top: 2px; color: var(--text-mid); font-weight: 500; font-size: 0.76rem; white-space: normal; line-height: 1.35; }
 
-/* ══ 16b. Data assumptions (Read mode — light editorial on ink) ═════════════ */
+/* ---- 16b. Data assumptions (Read mode ---- light editorial on ink) ---- */
 
 .assumptions-page {
   max-width: 1080px;
@@ -1419,7 +1428,7 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
   .method-section { padding: var(--space-4); }
 }
 
-/* ══ 17. Sync error ═════════════════════════════════════════════════════════ */
+/* ---- 17. Sync error ---- */
 
 .sync-error {
   position: fixed;
@@ -1443,14 +1452,14 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 }
 .sync-error span { flex: 1; }
 
-/* ══ 18. Map chrome (leaflet dark surface) ══════════════════════════════════ */
+/* ---- 18. Map chrome (leaflet dark surface) ---- */
 
 .map-frame { position: relative; height: 100%; border-radius: var(--r-md); overflow: hidden; }
 .leaflet-map { background: var(--ink-900); z-index: 1; border-radius: inherit; }
 
 .leaflet-container { background: var(--ink-900); font-family: var(--font-body); }
 
-/* Anonymous OSM tiles are light — invert them into the forest-ink world.
+/* Anonymous OSM tiles are light ---- invert them into the forest-ink world.
    A contracted dark provider (env-configured) skips the filter. */
 .map-frame[data-basemap="light"] .leaflet-tile {
   filter: invert(1) hue-rotate(185deg) brightness(0.94) contrast(0.86) saturate(0.65);
@@ -1535,7 +1544,7 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 .legend-swatch.user { background: var(--blue); }
 .legend-swatch.pickup { background: var(--teal); }
 
-/* ══ 19. Responsive ═════════════════════════════════════════════════════════ */
+/* ---- 19. Responsive ---- */
 
 @media (max-width: 1100px) {
   .impact-strip, .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1554,7 +1563,7 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 
 @media (max-width: 760px) {
   body { font-size: 14.5px; }
-  /* Hero copy sits mid-screen on phones — deepen the scrim there */
+  /* Hero copy sits mid-screen on phones ---- deepen the scrim there */
   .hero-map-layer::after {
     background:
       linear-gradient(0deg, rgba(4, 9, 6, 0.95) 0%, rgba(4, 9, 6, 0.8) 42%, rgba(4, 9, 6, 0.55) 62%, transparent 85%),

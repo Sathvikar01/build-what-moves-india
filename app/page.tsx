@@ -121,16 +121,22 @@ export default function Home() {
       </section>
 
       {/* The civic loop, counted live from the seeded scenario */}
-      <section className="loop-strip" id="loop" aria-label="How the loop works">
-        {loopSteps.map((label, index) => (
-          <div className={`loop-step rise rise-${Math.min(index + 1, 5)}`} key={label}>
-            <i aria-hidden="true">{String(index + 1).padStart(2, "0")}</i>
-            <strong>{label}</strong>
-            <b>{loopCounts[index]}</b>
-          </div>
-        ))}
+      <section className="loop-section" id="loop" aria-label="How the loop works">
+        <div className="loop-heading">
+          <p className="eyebrow">{copy.badge}</p>
+          <h2 className="rise">{copy.truth[2][0]}</h2>
+        </div>
+        <div className="loop-strip">
+          {loopSteps.map((label, index) => (
+            <div className={`loop-step rise rise-${Math.min(index + 1, 5)}`} key={label}>
+              <i aria-hidden="true">{String(index + 1).padStart(2, "0")}</i>
+              <strong>{label}</strong>
+              <b>{loopCounts[index]}</b>
+            </div>
+          ))}
+        </div>
+        <p className="loop-note">{copy.footerTag} · seed 4242</p>
       </section>
-      <p className="muted" style={{ margin: 0, padding: "0 clamp(16px, 4vw, 56px)", textAlign: "center", fontSize: "0.78rem" }}>{copy.footerTag} · seed 4242</p>
 
       <section className="role-section" aria-labelledby="choose-role">
         <div className="role-heading">

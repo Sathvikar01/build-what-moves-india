@@ -62,10 +62,10 @@ export default function BbmpPage(){
           <ImpactStat label={copy.day.overnight} value={state.dayCycle.phase==="at_depot"?copy.day.overnight:`${state.bins.filter(b=>b.fillPercent>=80).length} bins ≥80%`}/>
         </section>
         <section className="kpi-grid" aria-label="Live operations summary">
-          <Kpi label={copy.kpis.open} value={open} detail={`${urgent} ${copy.kpis.urgent}`} icon={<AlertTriangle/>}/>
-          <Kpi label={copy.kpis.demand} value={state.signals.filter(s=>s.status!=="collected").length} detail={copy.kpis.waiting} icon={<RadioTower/>}/>
+          <Kpi label={copy.kpis.open} value={open} detail={`${urgent} ${copy.kpis.urgent}`} icon={<AlertTriangle/>} tone="red"/>
+          <Kpi label={copy.kpis.demand} value={state.signals.filter(s=>s.status!=="collected").length} detail={copy.kpis.waiting} icon={<RadioTower/>} tone="teal"/>
           <Kpi label={copy.kpis.vehicles} value={state.vehicles.filter(v=>v.status==="en_route"||v.status==="collecting").length} detail={copy.kpis.ofTotal} icon={<Truck/>}/>
-          <Kpi label={copy.kpis.bins} value={full} detail={copy.kpis.threshold} icon={<CircleGauge/>}/>
+          <Kpi label={copy.kpis.bins} value={full} detail={copy.kpis.threshold} icon={<CircleGauge/>} tone="amber"/>
         </section>
         <section className="ops-grid">
           <article className="panel map-panel">
@@ -85,7 +85,7 @@ export default function BbmpPage(){
  </AtlasShell>;
 }
 
-function Kpi({label,value,detail,icon}:{label:string;value:number;detail:string;icon:React.ReactNode}){return <article className="kpi-card"><span>{icon}</span><div><p>{label}</p><strong>{value}</strong><small>{detail}</small></div></article>}
+function Kpi({label,value,detail,icon,tone}:{label:string;value:number;detail:string;icon:React.ReactNode;tone?:"red"|"amber"|"teal"}){return <article className="kpi-card"><span className={tone?`tone-${tone}`:undefined}>{icon}</span><div><p>{label}</p><strong>{value}</strong><small>{detail}</small></div></article>}
 
 function ImpactStat({label,value}:{label:string;value:string}){return <div><span>{label}</span><strong>{value}</strong></div>}
 

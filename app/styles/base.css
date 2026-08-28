@@ -82,9 +82,9 @@ h1, h2, h3 {
 .eyebrow {
   margin: 0 0 var(--space-2);
   color: var(--text-lo);
-  font-size: 0.72rem;
+  font-size: 0.66rem;
   font-weight: 650;
-  letter-spacing: 0.09em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 
