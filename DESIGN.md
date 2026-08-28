@@ -2,62 +2,77 @@
 name: Bengaluru Smart Waste Management
 description: Explainable civic waste coordination from citizen signal to verified cleanup.
 colors:
-  ink: "#14241c"
-  muted: "#5d6c64"
-  paper: "#f4f2e9"
-  surface: "#fffef9"
-  line: "#cfd5cc"
-  green: "#176b48"
-  green-dark: "#0e5035"
-  green-soft: "#dcebe1"
-  amber: "#bd6b19"
-  red: "#b43d34"
-  focus: "#146bd1"
+  ink-950: "#070e0a"
+  ink-900: "#0b1510"
+  ink-850: "#0f1b15"
+  ink-800: "#14231b"
+  ink-700: "#1e3327"
+  line: "rgba(213,236,221,0.09)"
+  text-hi: "#eaf3eb"
+  text-mid: "#a2b8aa"
+  text-lo: "#6b8074"
+  lime: "#c9f24d"
+  lime-bright: "#e0ff70"
+  lime-soft: "rgba(201,242,77,0.12)"
+  amber: "#f0a83c"
+  red: "#f26d5f"
+  teal: "#45d9c3"
+  violet: "#b795ff"
+  blue: "#74b9ff"
+  focus: "#8ecbff"
+  lime-deep: "#86c33a"
+  shadow-ink: "rgba(2,6,4,0.45)"
 typography:
-  display: { fontFamily: "Noto Sans, sans-serif", fontSize: "clamp(46px, 6.2vw, 88px)", fontWeight: 700, lineHeight: 0.98, letterSpacing: "-.04em" }
-  headline: { fontFamily: "Noto Sans, sans-serif", fontSize: "clamp(42px, 6vw, 72px)", fontWeight: 700, lineHeight: 1, letterSpacing: "-.045em" }
-  body: { fontFamily: "Noto Sans, sans-serif", fontSize: "14px", lineHeight: 1.55 }
-rounded: { small: "8px", control: "10px", map: "12px", panel: "14px", atlas: "16px", pill: "999px" }
-spacing: { control-inline: "17px", section: "17px", panel: "24px", page-inline: "clamp(18px, 3vw, 44px)" }
+  display: { fontFamily: "Space Grotesk (var(--font-display))", fontSize: "clamp(2.4rem, 5vw, 4rem)", fontWeight: 700, lineHeight: 1.02, letterSpacing: "-.03em" }
+  headline: { fontFamily: "Space Grotesk (var(--font-display))", fontSize: "clamp(1.5rem, 3vw, 2.1rem)", fontWeight: 700, lineHeight: 1.08, letterSpacing: "-.025em" }
+  body: { fontFamily: "Noto Sans (var(--font-body))", fontSize: "15px", lineHeight: 1.55 }
+  kannada: { fontFamily: "Noto Sans Kannada (var(--font-kn))" }
+rounded: { small: "8px", md: "12px", lg: "16px", xl: "22px", pill: "999px" }
+spacing: { unit: "4px scale (--space-1..8)", page-inline: "clamp(16px, 4vw, 56px)" }
+motion:
+  ease-out: "cubic-bezier(0.23, 1, 0.32, 1)"
+  ease-inout: "cubic-bezier(0.77, 0, 0.175, 1)"
+  ease-drawer: "cubic-bezier(0.32, 0.72, 0, 1)"
+  durations: "140ms press · 200ms small · 280ms drawers"
 ---
 
-# Design System: Bengaluru Smart Waste Management
+# Design System: Command Atlas
 
 ## Overview
 
-Creative north star: “Namma Civic Atlas.” This is a calm, high-contrast public-service interface grounded in Bengaluru geography. A citizen signal becomes operational demand, priorities and route changes show their reasons, and cleanup ends with evidence and citizen verification.
+Creative north star: **"Command Atlas."** A map-first operations surface — forest-ink chrome, one signal-lime accent reserved for "live / act now," and floating translucent materials over a dark CARTO basemap. Every decision explains itself in a why-drawer; every number on screen comes from seed 4242 and says so.
 
-Use warm paper, near-white civic surfaces, thin rules, restrained depth, and Bengaluru green. Amber and red are reserved for operational meaning. Real geography and synthetic telemetry must be labelled distinctly.
+The incumbent "Namma Civic Atlas" (paper/cream, civic green) was replaced wholesale. Its look is the anti-reference; its product invariants carry forward unchanged.
 
-## Color and type
+## Structure
 
-- Deep civic green is for primary actions, active navigation, brand marks, routes, and high-emphasis metrics.
-- Amber marks attention, elevated fill, and waste-outside signals. Red marks reports, blocked/full/offline states, and danger.
-- Ink is primary text; muted ink is metadata and supporting copy; focus blue is the universal keyboard ring.
-- Noto Sans is the display and body face. Noto Sans Kannada is mandatory for Kannada copy; Kannada is first-class content, not ornament.
-- Large headlines use tight tracking and compact leading. Operational text stays compact but readable.
+- **Split shell** (`AtlasShell` + `.atlas-split`): a persistent live map canvas plus a contextual glass rail. Desktop: map fills the viewport, rail docks right (360–430px). Mobile (≤960px): map collapses to a 40–44dvh hero layer, rail stacks below.
+- **Floating chrome**: the app header and route-status chip are translucent material layers (`backdrop-filter: blur(20px) saturate(160%)`) with a bright top edge. Content scrolls underneath.
+- **Why-drawer**: the explainability pattern. Desktop = right slide-over; mobile = bottom sheet. Enter and exit share one path (spatial consistency); exits animate before unmount.
 
-## Layout
+## Color rules
 
-- Landing: a narrative beside an atlas preview, followed by three role rows.
-- Citizen: mobile-first hero, two prominent signals, collection/map status, nearby bins, evidence report, cleanup confirmation, and event timeline.
-- BBMP: KPI strip, map beside priority queue, and stable tabs for priority, routes, bins, and placement.
-- Collector: next-stop map/action pairing, explicit evidence gate, and a canonical route list.
-- Maps always have complete list/table parity. On mobile the list is visible beneath the map. Tables scroll horizontally and dashboard columns collapse to one.
+- **Signal lime is sacred**: primary actions, live indicators, focus of attention, route traversal. Never decorative.
+- Semantic states: amber (fill/warning), red (overflow/blocked), teal (signals/pickups), violet (placement recommendations), blue (user location, neutral info), `--focus` blue for focus rings (never lime — focus ≠ action).
+- Score bands: routine (neutral) → scheduled (blue) → high (amber) → urgent (red) → critical (red + glow).
+- Honesty: synthetic-data labels stay visible on every surface; source chips name geography.
 
-## Components
+## Type rules
 
-- Primary and secondary controls use 10px radii and at least 44px height. All controls retain the 3px blue focus ring.
-- Panels use the civic surface, a quiet border, 14px radius, 24px padding, and only subtle lift.
-- Inputs are white, 46px high, 9px radius, and visibly labelled. Upload zones describe size/type/privacy before selection.
-- Status chips pair color with text. Selected queue and placement rows use a pale green field.
-- Priority, route, and placement scores never appear without factor/signal contributions and prose reasons.
-- Collection, proof submission, proof acceptance, and citizen confirmation are distinct workflow states.
+- Space Grotesk for display + all numerals (`tabular-nums`); Noto Sans body; Noto Sans Kannada for KN locale. Tracking is size-specific: negative on display, ~0 on body.
+- Hierarchy from weight + size + leading as a set; uppercase eyebrows at 0.72rem/0.09em tracking carry section labels.
 
-## Accessibility and truth rules
+## Motion rules (enforced)
 
-- Preserve map/list parity, 44px touch targets, visible focus, reduced motion, semantic tables, and plain-language recovery states.
-- Keep exact citizen coordinates out of public aggregate views.
-- Label simulated vehicles, sensors, ETAs, evidence, and scenario seed. Never imply an official live BBMP feed.
-- Do not hide blocked, stale, offline, permission-denied, upload-failed, or incomplete-cleanup states.
-- Do not introduce glossy gradients, arbitrary semantic colors, heavy shadow stacks, or motion that overrides reduced-motion preference.
+- Press feedback on every pressable: `scale(0.97)` at 140ms ease-out, on pointer-down timelines.
+- Entries start from `scale(0.95)/translateY(8px) + opacity: 0` via `@starting-style` — never from `scale(0)`, never `transition: all`.
+- UI transitions ≤ 300ms; transform/opacity only; CSS transitions (interruptible), keyframes only for loops (pulse/shimmer/ping).
+- List entries stagger 30–80ms where they appear in groups. Hover transforms gated behind `@media (hover:hover)`.
+- `prefers-reduced-motion`: cross-fades replace slides/pulses; `prefers-reduced-transparency`: glass goes near-solid.
+
+## Invariants (product law — never break)
+
+1. Map/list parity — lists show what the map plots.
+2. Synthetic-data labels — every operational number is labelled demo data.
+3. Explainability before score — a factor breakdown ships with every number.
+4. Evidence before cleanup confirmation — before/after proof precedes citizen confirmation.

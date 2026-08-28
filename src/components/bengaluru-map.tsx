@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import type { CircleMarker, LayerGroup, Map as LeafletMap, Marker, Polyline } from "leaflet";
-import { MAP_ATTRIBUTION, MAP_TILE_URL } from "../config/map";
+import { MAP_ATTRIBUTION, MAP_TILE_IS_LIGHT, MAP_TILE_URL } from "../config/map";
 import { MAHADEVAPURA_CENTER, MOCK_USER_LOCATION } from "../data/locations";
 import { pointAtDistance, slicePath } from "../domain/road-graph";
 import { haversineKm } from "../domain/geo";
@@ -28,7 +28,7 @@ export { MOCK_USER_LOCATION };
 type MapStatus = "loading" | "ready" | "error";
 type RoutePath = { points: GeoPoint[]; totalKm: number; stops: number[] };
 
-const TRUCK_SVG = `<div class="truck-marker"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M12 2.5 19.5 21 12 16.6 4.5 21Z" fill="#0e5035" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/></svg></div>`;
+const TRUCK_SVG = `<div class="truck-marker"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M12 2.5 19.5 21 12 16.6 4.5 21Z" fill="#c9f24d" stroke="#0b1510" stroke-width="1.4" stroke-linejoin="round"/></svg></div>`;
 
 type VehicleEntry = { marker: Marker; bearing: number; lastLocation: GeoPoint | null };
 
@@ -71,7 +71,7 @@ export function BengaluruMap({ markers, route = [], vehiclePaths, geometrySource
         vehicleLayerRef.current = L.layerGroup().addTo(map);
         userLayerRef.current = L.layerGroup().addTo(map);
 
-        const tiles = L.tileLayer(MAP_TILE_URL, { maxZoom: 19, attribution: MAP_ATTRIBUTION });
+        const tiles = L.tileLayer(MAP_TILE_URL, { maxZoom: 19, attribution: MAP_ATTRIBUTION, detectRetina: true });
         tiles.on("tileerror", () => setStatus("error"));
         tiles.on("load", () => setStatus("ready"));
         tiles.addTo(map);
@@ -140,15 +140,15 @@ export function BengaluruMap({ markers, route = [], vehiclePaths, geometrySource
       if (tripStatus) {
         const total = leadPath.totalKm;
         const progress = Math.min(tripStatus.progressKm, total);
-        // One continuous blue traversal line anchored at the truck: everything
+        // One continuous lime traversal line anchored at the truck: everything
         // from its current position through the remaining stops back to base.
-        draw(slicePath(leadPath.points, 0, progress, roadFactor), "#7d9187", 4, 0.55);            // traveled (dimmed)
-        draw(slicePath(leadPath.points, progress, total, roadFactor), "#fff", 9, 0.9);            // casing
-        draw(slicePath(leadPath.points, progress, total, roadFactor), "#146bd1", 5.5, 0.95);      // route from vehicle
-        draw(slicePath(leadPath.points, progress, Math.min(tripStatus.nextStopKm ?? total, total), roadFactor), "#0b57c2", 7.5, 1); // leg to next stop
+        draw(slicePath(leadPath.points, 0, progress, roadFactor), "#5a6f63", 4, 0.5);             // traveled (dimmed)
+        draw(slicePath(leadPath.points, progress, total, roadFactor), "#fff", 9, 0.85);           // casing
+        draw(slicePath(leadPath.points, progress, total, roadFactor), "#c9f24d", 5.5, 0.95);      // route from vehicle
+        draw(slicePath(leadPath.points, progress, Math.min(tripStatus.nextStopKm ?? total, total), roadFactor), "#e0ff70", 7, 1); // leg to next stop
       } else {
-        draw(leadPath.points, "#fff", 9, 0.9);
-        draw(leadPath.points, "#146bd1", 5.5, 0.95);
+        draw(leadPath.points, "#fff", 9, 0.85);
+        draw(leadPath.points, "#c9f24d", 5.5, 0.95);
       }
     }
 
@@ -159,18 +159,18 @@ export function BengaluruMap({ markers, route = [], vehiclePaths, geometrySource
     if (nextPoint && tripStatus && tripStatus.nextStopIndex !== null) {
       const ring = L.circleMarker([nextPoint.lat, nextPoint.lng], {
         radius: 14,
-        color: "#146bd1",
+        color: "#c9f24d",
         weight: 3,
         opacity: 0.9,
-        fillColor: "#146bd1",
+        fillColor: "#c9f24d",
         fillOpacity: 0.15,
         className: "next-stop-ring",
       }).addTo(map);
       routeLayerRef.current.push(ring);
     }
 
-    // These mirror the :root tokens in app/globals.css (--green, --amber, --red, --focus, --recommendation).
-    const colors = { vehicle: "#176b48", bin: "#bd6b19", report: "#b43d34", signal: "#146bd1", recommendation: "#6d4aa2", user: "#146bd1", pickup: "#0e8a7d" } as const;
+    // These mirror the :root tokens in app/styles/tokens.css (--lime, --amber, --red, --blue, --violet, --teal).
+    const colors = { vehicle: "#c9f24d", bin: "#f0a83c", report: "#f26d5f", signal: "#45d9c3", recommendation: "#b795ff", user: "#74b9ff", pickup: "#45d9c3" } as const;
 
     const statics = staticMarkersRef.current;
     const vehicles = vehiclesRef.current;
@@ -206,7 +206,7 @@ export function BengaluruMap({ markers, route = [], vehiclePaths, geometrySource
       const existing = statics.get(marker.id);
       if (existing) {
         existing.setLatLng([marker.location.lat, marker.location.lng]);
-        existing.setStyle({ fillColor: overflow ? "#b43d34" : colors[marker.kind], className: overflow ? "overflow-bin" : "" });
+        existing.setStyle({ fillColor: overflow ? "#f26d5f" : colors[marker.kind], className: overflow ? "overflow-bin" : "" });
         existing.bindPopup(popupText);
         return;
       }
@@ -214,7 +214,7 @@ export function BengaluruMap({ markers, route = [], vehiclePaths, geometrySource
         radius: marker.kind === "recommendation" ? 7 : 6,
         color: "#fff",
         weight: 3,
-        fillColor: overflow ? "#b43d34" : colors[marker.kind],
+        fillColor: overflow ? "#f26d5f" : colors[marker.kind],
         fillOpacity: 1,
         className: overflow ? "overflow-bin" : undefined,
       }).bindPopup(popupText).addTo(staticLayer));
@@ -334,12 +334,12 @@ export function BengaluruMap({ markers, route = [], vehiclePaths, geometrySource
   }, [mapVersion]);
 
   return (
-    <section className="map-frame" data-geometry={geometrySource} aria-labelledby={`${id}-title`} aria-busy={status === "loading"}>
+    <section className="map-frame" data-geometry={geometrySource} data-basemap={MAP_TILE_IS_LIGHT ? "light" : "dark"} aria-labelledby={`${id}-title`} aria-busy={status === "loading"}>
       <strong className="sr-only" id={`${id}-title`}>Mahadevapura operations map</strong>
       <div id={id} ref={ref} style={{ height }} className="leaflet-map" role="img" aria-label="Interactive map of vehicles, bins, reports, your location, and route stops in Mahadevapura" />
       {tripStatus && (
         <div className="route-status" role="status">
-          <span className="route-status-blue" aria-hidden="true" />
+          <span className="route-status-accent" aria-hidden="true" />
           <strong>{tripStatus.label}</strong>
           <span>·</span>
           <strong>{tripStatus.remainingKm} km</strong>

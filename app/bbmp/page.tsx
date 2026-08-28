@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { AlertTriangle, ArrowDownUp, Check, ChevronRight, CircleGauge, MapPinned, Play, RadioTower, RotateCcwSquare, Route, Truck } from "lucide-react";
-import { AppHeader } from "../../src/components/app-header";
+import { AtlasShell } from "../../src/components/atlas-shell";
 import { BengaluruMap, type MapMarker } from "../../src/components/bengaluru-map";
 import { PriorityAudit } from "../../src/components/priority-audit";
 import { useDemo } from "../../src/components/demo-provider";
@@ -39,11 +39,10 @@ export default function BbmpPage(){
    (buttons?.[tabs.findIndex(t=>t.id===nextTab.id)] as HTMLButtonElement|undefined)?.focus();
  }
 
- if(!ready) return <main className="app-shell"><AppHeader role="bbmp"/><div className="page-wrap"><SkeletonBlock rows={3}/></div></main>;
+ if(!ready) return <AtlasShell role="bbmp"><div className="page-wrap"><SkeletonBlock rows={3}/></div></AtlasShell>;
 
- return <main className="app-shell">
-  <a className="skip-link" href="#bbmp-main">Skip to content</a>
-  <AppHeader role="bbmp"/>
+ return <AtlasShell role="bbmp">
+  <div lang={locale==="kn"?"kn":"en"}>
   <div className="ops-nav">
     <div><strong>{copy.navTitle}</strong><span>{copy.navSub}</span></div>
     <nav aria-label="Operations sections" role="tablist" ref={tabNav} onKeyDown={e=>{if(e.key==="ArrowRight"){e.preventDefault();moveTab(1)}if(e.key==="ArrowLeft"){e.preventDefault();moveTab(-1)}}}>
@@ -70,7 +69,7 @@ export default function BbmpPage(){
         </section>
         <section className="ops-grid">
           <article className="panel map-panel">
-            <div className="section-heading split-heading"><div><p className="eyebrow">{copy.mapHeading}</p><h1>{copy.mapTitle}</h1></div><span className="source-chip">{copy.geography}</span></div>
+            <div className="section-heading split-heading"><div><p className="eyebrow">{copy.mapHeading}</p><h1 className="title">{copy.mapTitle}</h1></div><span className="source-chip">{copy.geography}</span></div>
             <BengaluruMap markers={markers} route={state.route.roadPath} vehiclePaths={state.route.roadPathByVehicle} geometrySource={state.route.roadGeometrySource} tripStatus={tripStatusFor(state)} userLocation={state.userLocation?.location??MOCK_USER_LOCATION} height={530}/>
           </article>
           <PriorityQueue ranked={ranked} selectedId={selected?.id} onSelect={id=>{selectReport(id);setTab("priority")}}/>
@@ -82,7 +81,8 @@ export default function BbmpPage(){
       {tab==="placement"&&<PlacementLab/>}
     </div>
   </div>
- </main>;
+  </div>
+ </AtlasShell>;
 }
 
 function Kpi({label,value,detail,icon}:{label:string;value:number;detail:string;icon:React.ReactNode}){return <article className="kpi-card"><span>{icon}</span><div><p>{label}</p><strong>{value}</strong><small>{detail}</small></div></article>}
@@ -92,7 +92,7 @@ function ImpactStat({label,value}:{label:string;value:string}){return <div><span
 function PriorityQueue({ranked,selectedId,onSelect}:{ranked:ReturnType<typeof useDemo>["state"]["reports"];selectedId?:string;onSelect:(id:string)=>void}){
   const {locale}=useDemo();const copy=uiCopy[locale].bbmp;
   return <aside className="panel queue-panel">
-    <div className="section-heading split-heading"><div><p className="eyebrow">{copy.queueEyebrow}</p><h2>{copy.queueTitle}</h2></div><ArrowDownUp size={18}/></div>
+    <div className="section-heading split-heading"><div><p className="eyebrow">{copy.queueEyebrow}</p><h2 className="title">{copy.queueTitle}</h2></div><ArrowDownUp size={18}/></div>
     {ranked.length===0
       ? <EmptyState>{uiCopy[locale].bbmp.queueTitle}: 0 — every report has been citizen-confirmed.</EmptyState>
       : <div className="queue-list">{ranked.map((report,index)=>(
@@ -167,7 +167,7 @@ function RoutesLab(){
     </div>
     <section className="panel replay-panel">
       <div className="section-heading split-heading">
-        <div><p className="eyebrow">Plan preview</p><h2>Replay this route</h2><p>Animate the assigned vehicle along the published OSM path to preview the round before the shift starts.</p></div>
+        <div><p className="eyebrow">Plan preview</p><h2 className="title">Replay this route</h2><p>Animate the assigned vehicle along the published OSM path to preview the round before the shift starts.</p></div>
         <div className="replay-actions">
           {replayTrip
             ? <button type="button" className="secondary-button" onClick={()=>setReplayKm(null)}><RotateCcwSquare size={18}/>Stop replay</button>
@@ -175,16 +175,16 @@ function RoutesLab(){
         </div>
       </div>
       <BengaluruMap markers={[]} route={lead?.path??[]} vehiclePaths={lead?[lead]:undefined} geometrySource={state.route.roadGeometrySource} tripStatus={replayTrip} height={340}/>
-      {replayTrip&&<div className="replay-progress" role="status"><i style={{width:`${Math.round(100*replayTrip.progressKm/Math.max(1,replayTrip.totalKm))}%`}}/><span>{replayTrip.sub}{replayTrip.nextStopLabel?` · next: ${replayTrip.nextStopLabel}`:" · returning to depot"}</span></div>}
+      {replayTrip&&<div className="replay-progress" role="status"><i style={{transform:`scaleX(${Math.min(1,replayTrip.progressKm/Math.max(1,replayTrip.totalKm))})`}}/><span>{replayTrip.sub}{replayTrip.nextStopLabel?` · next: ${replayTrip.nextStopLabel}`:" · returning to depot"}</span></div>}
     </section>
     <section className="panel">
-      <div className="section-heading"><p className="eyebrow">Adaptive signal weights</p><h2>What the optimizer is listening to</h2></div>
-      <div className="weights-grid">{Object.entries(state.route.weights).map(([key,value])=><div key={key}><span>{key.replace(/([A-Z])/g," $1")}</span><strong>{Math.round(value*100)}%</strong><i><b style={{width:`${value*100}%`}}/></i></div>)}</div>
+      <div className="section-heading"><p className="eyebrow">Adaptive signal weights</p><h2 className="title">What the optimizer is listening to</h2></div>
+      <div className="weights-grid">{Object.entries(state.route.weights).map(([key,value])=><div key={key}><span>{key.replace(/([A-Z])/g," $1")}</span><strong>{Math.round(value*100)}%</strong><i><b style={{transform:`scaleX(${value})`}}/></i></div>)}</div>
     </section>
     <div className="route-cards">
       {state.route.routes.filter(route=>route.stops.length>0).map(route=>(
         <section className="panel route-card" key={route.vehicleId}>
-          <div className="section-heading split-heading"><div><p className="eyebrow">Vehicle</p><h2>{state.vehicles.find(v=>v.id===route.vehicleId)?.label??route.vehicleId}</h2></div><Route size={18}/></div>
+          <div className="section-heading split-heading"><div><p className="eyebrow">Vehicle</p><h2 className="title">{state.vehicles.find(v=>v.id===route.vehicleId)?.label??route.vehicleId}</h2></div><Route size={18}/></div>
           <ol className="stop-list">{route.stops.map((stop,stopIndex)=>(
             <li key={stop.id}>
               <span className="stop-sequence">{stop.sequence}</span>
@@ -206,7 +206,7 @@ function RoutesLab(){
 function BinsTable(){
   const {state}=useDemo();
   return <section className="panel">
-    <div className="section-heading"><p className="eyebrow">Synthetic IoT telemetry</p><h1>Smart-bin status</h1></div>
+    <div className="section-heading"><p className="eyebrow">Synthetic IoT telemetry</p><h1 className="title">Smart-bin status</h1></div>
     <div className="table-scroll"><table className="data-table">
       <caption>Ten demo smart bins with deterministic fill telemetry</caption>
       <thead><tr><th>Bin</th><th>Locality</th><th>Fill</th><th>Status</th><th>Streams</th><th>Freshness</th></tr></thead>
@@ -227,7 +227,7 @@ function PlacementLab(){
     <div className="placement-layout">
       <div className="panel"><BengaluruMap markers={markers} height={500}/></div>
       <aside className="panel placement-list">
-        <div className="section-heading"><p className="eyebrow">Six diversified candidates</p><h2>Recommended public edges</h2></div>
+        <div className="section-heading"><p className="eyebrow">Six diversified candidates</p><h2 className="title">Recommended public edges</h2></div>
         {state.recommendations.map(r=>(
           <button className={selected===r.id?"placement-row selected":"placement-row"} key={r.id} onClick={()=>setSelected(r.id)}>
             <span>{r.rank}</span><div><strong>{r.label}</strong><small>{r.locality} · {Math.round(r.confidence*100)}% confidence</small></div><b>{r.score.toFixed(1)}</b>
@@ -236,7 +236,7 @@ function PlacementLab(){
       </aside>
     </div>
     {rec&&<section className="panel recommendation-detail">
-      <div className="section-heading split-heading"><div><p className="eyebrow">Recommendation #{rec.rank}</p><h2>{rec.label}</h2><p>{rec.reasons.join(" · ")}</p></div><div className="score-orb"><strong>{rec.score.toFixed(1)}</strong><span>placement</span></div></div>
+      <div className="section-heading split-heading"><div><p className="eyebrow">Recommendation #{rec.rank}</p><h2 className="title">{rec.label}</h2><p>{rec.reasons.join(" · ")}</p></div><div className="score-orb"><strong>{rec.score.toFixed(1)}</strong><span>placement</span></div></div>
       {rec.requiresFieldValidation&&<div className="alert warning"><MapPinned/><div><strong>Field validation required</strong><p>{rec.warnings.join(" ")}</p></div></div>}
       <div className="table-scroll"><table className="data-table">
         <caption>Complete placement score factor breakdown</caption>

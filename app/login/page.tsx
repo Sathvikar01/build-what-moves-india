@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { ArrowLeft, Building2, Recycle, Route } from "lucide-react";
 import { useAuth, type DemoRole } from "../../src/components/auth";
 import { useDemo } from "../../src/components/demo-provider";
@@ -35,7 +36,7 @@ export default function LoginPage(){
         <span className="brand-mark" aria-hidden="true">BW</span>
         <div style={{display:"flex",gap:8}}>
           <button type="button" className="quiet-button" onClick={()=>setLocale(locale==="en"?"kn":"en")} aria-label="Switch language">{locale==="en"?"ಕನ್ನಡ":"English"}</button>
-          <a className="quiet-button" style={{textDecoration:"none"}} href="/"><ArrowLeft size={16}/>{copy.back}</a>
+          <Link className="quiet-button" style={{textDecoration:"none"}} href="/"><ArrowLeft size={16}/>{copy.back}</Link>
         </div>
       </div>
       <h1>{copy.title}</h1>

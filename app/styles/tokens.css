@@ -1,0 +1,91 @@
+/* ============================================================================
+   COMMAND ATLAS — design tokens
+   Forest-ink chrome, signal-lime accent. Every color, curve, and duration in
+   the product resolves from here. No component CSS may hardcode raw values.
+   ========================================================================== */
+
+:root {
+  /* ── Forest ink surface ramp (dark-first) ─────────────────────────────── */
+  --ink-950: #070e0a;
+  --ink-900: #0b1510;
+  --ink-850: #0f1b15;
+  --ink-800: #14231b;
+  --ink-750: #182a20;
+  --ink-700: #1e3327;
+  --ink-600: #284333;
+
+  --line: rgba(213, 236, 221, 0.09);
+  --line-strong: rgba(213, 236, 221, 0.17);
+  --line-lime: rgba(201, 242, 77, 0.28);
+
+  --text-hi: #eaf3eb;
+  --text-mid: #a2b8aa;
+  --text-lo: #6b8074;
+  --text-on-accent: #17210a;
+
+  /* ── Signal lime (the one accent that means "live / act now") ─────────── */
+  --lime: #c9f24d;
+  --lime-bright: #e0ff70;
+  --lime-soft: rgba(201, 242, 77, 0.12);
+  --lime-edge: rgba(201, 242, 77, 0.38);
+
+  /* ── Semantic states ───────────────────────────────────────────────────── */
+  --amber: #f0a83c;
+  --amber-soft: rgba(240, 168, 60, 0.13);
+  --red: #f26d5f;
+  --red-soft: rgba(242, 109, 95, 0.13);
+  --teal: #45d9c3;
+  --teal-soft: rgba(69, 217, 195, 0.12);
+  --violet: #b795ff;
+  --violet-soft: rgba(183, 149, 255, 0.12);
+  --blue: #74b9ff;
+  --blue-soft: rgba(116, 185, 255, 0.13);
+  --focus: #8ecbff;
+
+  /* ── Materials (Apple-style translucent layers over the map) ──────────── */
+  --glass-bg: rgba(9, 18, 13, 0.6);
+  --glass-bg-strong: rgba(9, 18, 13, 0.78);
+  --glass-blur: blur(20px) saturate(160%);
+  --glass-edge: rgba(234, 243, 235, 0.09);
+  --glass-edge-hi: rgba(234, 243, 235, 0.18);
+
+  /* ── Depth ─────────────────────────────────────────────────────────────── */
+  --shadow-1: 0 1px 2px rgba(2, 6, 4, 0.5), 0 10px 30px rgba(2, 6, 4, 0.38);
+  --shadow-2: 0 2px 8px rgba(2, 6, 4, 0.55), 0 28px 70px rgba(2, 6, 4, 0.55);
+  --shadow-lime: 0 4px 22px rgba(201, 242, 77, 0.22);
+
+  /* ── Motion (emil-design-eng curves; interruptible CSS transitions) ───── */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-inout: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --t-fast: 140ms;
+  --t-med: 200ms;
+  --t-slow: 280ms;
+
+  /* ── Shape & rhythm ────────────────────────────────────────────────────── */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 22px;
+  --r-pill: 999px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 28px;
+  --space-7: 40px;
+  --space-8: 56px;
+
+  /* ── Typography: next/font variables arrive on <body>; composite stacks
+        are defined there (see base.css). ─────────────────────────────────── */
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass-bg: rgba(9, 18, 13, 0.96);
+    --glass-bg-strong: #0b1510;
+    --glass-blur: none;
+  }
+}

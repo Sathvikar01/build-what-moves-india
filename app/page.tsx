@@ -130,7 +130,7 @@ export default function Home() {
       </section>
 
       <footer className="landing-footer">
-        <p>Bengaluru Smart Waste Management</p>
+        <p>Bengaluru Smart Waste</p>
         <p>{copy.footerTag}</p>
         <a href="/data-assumptions">{copy.footerLink}</a>
       </footer>
