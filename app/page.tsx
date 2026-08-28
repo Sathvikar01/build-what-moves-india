@@ -2,11 +2,11 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { ArrowRight, Building2, MapPin, Recycle, Route, ShieldCheck } from "lucide-react";
+import { ArrowRight, Building2, ChevronDown, MapPin, Recycle, Route, ShieldCheck } from "lucide-react";
 import { BengaluruMap, MOCK_USER_LOCATION, type MapMarker } from "../src/components/bengaluru-map";
 import { routeOnRoads } from "../src/domain/road-graph";
 import { LOCATION_SOURCE } from "../src/data/locations";
-import { uiCopy } from "../src/data/copy";
+import { uiCopy, citizenCopy } from "../src/data/copy";
 import { useDemo } from "../src/components/demo-provider";
 import { createDemoState } from "../src/data/demo";
 import { tripStatusFor } from "../src/components/trip-status";
@@ -37,9 +37,9 @@ const landingRoadRoute = routeOnRoads([
 ]);
 
 const roleMeta = [
-  { href: "/citizen", key: "citizen" as const, icon: Recycle },
-  { href: "/bbmp", key: "bbmp" as const, icon: Building2 },
-  { href: "/collector", key: "collector" as const, icon: Route },
+  { href: "/citizen", key: "citizen" as const, icon: Recycle, accent: "var(--lime)" },
+  { href: "/bbmp", key: "bbmp" as const, icon: Building2, accent: "var(--blue)" },
+  { href: "/collector", key: "collector" as const, icon: Route, accent: "var(--teal)" },
 ];
 
 // Lime-highlight the payoff sentence of the hero headline (last ". " split;
@@ -53,7 +53,8 @@ function HeroHeadline({ text }: { text: string }) {
 export default function Home() {
   const { locale, setLocale } = useDemo();
   const copy = uiCopy[locale].landing;
-  // Live-from-seed summary strip: counts come from the scenario itself.
+  // Live-from-seed numbers: the map strip and the civic loop both read from
+  // the same deterministic scenario the consoles run — no hand-written stats.
   const summary = useMemo(() => {
     const trip = tripStatusFor(seedState);
     const nearestEta = trip?.etaToNextMinutes ?? Math.min(...seedState.signals.map(signal => signal.etaMinutes ?? 9), 9);
@@ -63,6 +64,16 @@ export default function Home() {
       nearest: `${nearestEta} min`,
     };
   }, []);
+  // The civic loop in five steps — labels reuse the tracker step copy (EN/KN),
+  // counts come straight from the seeded scenario.
+  const loopSteps = citizenCopy[locale].steps.slice(0, 5);
+  const loopCounts = useMemo(() => [
+    seedState.signals.length,
+    seedState.reports.length,
+    seedState.route.routes[0]?.stops.length ?? 0,
+    seedState.proofs.length,
+    seedState.reports.filter(report => report.status === "confirmed").length,
+  ], []);
   return (
     <main className="landing-shell" lang={locale === "kn" ? "kn" : "en"}>
       <div className="hero-atmosphere" aria-hidden="true" />
@@ -80,58 +91,65 @@ export default function Home() {
         </nav>
       </header>
 
+      {/* First screen IS the map. Content floats on glass above it. */}
       <section className="landing-hero" id="main-content">
-        <div className="hero-copy">
-          <h1 className="rise"><HeroHeadline text={copy.hero} /></h1>
-          <p className="rise rise-1">{copy.sub}</p>
-          <div className="hero-actions rise rise-2">
-            <a className="landing-button landing-button-primary" href="/citizen" data-testid="hero-citizen">
-              {copy.primaryAction} <ArrowRight size={18} aria-hidden="true" />
-            </a>
-            <a className="landing-button landing-button-secondary" href="/bbmp" data-testid="hero-operations">
-              {copy.secondaryAction}
-            </a>
-          </div>
+        <div className="hero-map-layer" aria-hidden="false">
+          <BengaluruMap markers={landingMarkers} route={landingRoadRoute} vehiclePaths={[{ vehicleId: landingVehicle.id, path: landingRoadRoute }]} userLocation={seedState.userLocation?.location ?? MOCK_USER_LOCATION} height="100%" />
         </div>
-
-        <div className="landing-map-panel rise rise-3">
-          <div className="map-panel-heading">
-            <div>
-              <MapPin size={18} aria-hidden="true" />
-              <span><strong>{copy.mapTitle}</strong><small>{LOCATION_SOURCE.label} · place geography</small></span>
+        <div className="hero-overlay">
+          <div className="hero-overlay-copy">
+            <h1 className="rise"><HeroHeadline text={copy.hero} /></h1>
+            <p className="rise rise-1">{copy.sub}</p>
+            <div className="hero-actions rise rise-2">
+              <a className="landing-button landing-button-primary" href="/citizen" data-testid="hero-citizen">
+                {copy.primaryAction} <ArrowRight size={18} aria-hidden="true" />
+              </a>
+              <a className="landing-button landing-button-secondary" href="/bbmp" data-testid="hero-operations">
+                {copy.secondaryAction}
+              </a>
             </div>
-            <span className="map-live-state">{copy.mapState}</span>
           </div>
-          <BengaluruMap markers={landingMarkers} route={landingRoadRoute} vehiclePaths={[{ vehicleId: landingVehicle.id, path: landingRoadRoute }]} userLocation={seedState.userLocation?.location ?? MOCK_USER_LOCATION} height="clamp(340px, 44vw, 520px)" />
-          <div className="map-summary" aria-label="Map summary">
-            <span><strong>{summary.locations}</strong> {copy.locations}</span>
-            <span><strong>{summary.revisions}</strong> {copy.routeRevision}</span>
-            <span><strong>{summary.nearest}</strong> {copy.nearest}</span>
+          <div className="hero-dock rise rise-3">
+            <span className="stat"><strong>{summary.locations}</strong> {copy.locations}</span>
+            <span className="stat"><strong>{summary.revisions}</strong> {copy.routeRevision}</span>
+            <span className="stat"><strong>{summary.nearest}</strong> {copy.nearest}</span>
+            <span className="spacer" />
+            <span className="source-chip"><MapPin size={12} aria-hidden="true" /> {LOCATION_SOURCE.label}</span>
+            <a className="scroll-cue" href="#loop" aria-label="Scroll to how it works"><ChevronDown size={16} aria-hidden="true" /></a>
           </div>
         </div>
       </section>
 
-      <section className="landing-truth-strip" aria-label="Demo data summary">
-        {copy.truth.map(([title, detail], index) => (
-          <p key={title} className={`rise rise-${Math.min(index + 1, 5)}`}><strong>{title}</strong><span>{detail}</span></p>
+      {/* The civic loop, counted live from the seeded scenario */}
+      <section className="loop-strip" id="loop" aria-label="How the loop works">
+        {loopSteps.map((label, index) => (
+          <div className={`loop-step rise rise-${Math.min(index + 1, 5)}`} key={label}>
+            <i aria-hidden="true">{String(index + 1).padStart(2, "0")}</i>
+            <strong>{label}</strong>
+            <b>{loopCounts[index]}</b>
+          </div>
         ))}
       </section>
+      <p className="muted" style={{ margin: 0, padding: "0 clamp(16px, 4vw, 56px)", textAlign: "center", fontSize: "0.78rem" }}>{copy.footerTag} · seed 4242</p>
 
       <section className="role-section" aria-labelledby="choose-role">
         <div className="role-heading">
           <h2 id="choose-role">{copy.chooseTitle}</h2>
           <p>{copy.chooseSub}</p>
         </div>
-        <div className="role-list">
-          {roleMeta.map((role) => {
+        <div className="role-cards">
+          {roleMeta.map((role, index) => {
             const Icon = role.icon;
             const strings = copy.roles[role.key];
             return (
-              <a className="role-row" href={role.href} key={role.href}>
-                <span className="role-icon" aria-hidden="true"><Icon size={21} /></span>
-                <span className="role-name"><strong>{strings.title}</strong><small lang="kn">{locale === "kn" ? "Citizen service · BBMP · Collector" : "ನಾಗರಿಕ ಸೇವೆ · ಕಾರ್ಯಾಚರಣೆ · ಸಂಗ್ರಹ"}</small></span>
-                <span className="role-copy">{strings.copy}</span>
-                <span className="role-action">{strings.action}<ArrowRight size={17} aria-hidden="true" /></span>
+              <a className={`role-card rise rise-${Math.min(index + 1, 5)}`} href={role.href} key={role.href} style={{ "--card-accent": role.accent } as React.CSSProperties}>
+                <div className="role-card-head">
+                  <span className="role-icon" aria-hidden="true"><Icon size={22} /></span>
+                  <span className="role-card-no" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
+                </div>
+                <strong>{strings.title}</strong>
+                <p>{strings.copy}</p>
+                <span className="role-card-go">{strings.action}<ArrowRight size={16} aria-hidden="true" /></span>
               </a>
             );
           })}
