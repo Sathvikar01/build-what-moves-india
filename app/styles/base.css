@@ -1,0 +1,139 @@
+/* ============================================================================
+   COMMAND ATLAS — base
+   Reset, typographic scale, accessibility primitives, leaflet surface.
+   ========================================================================== */
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html {
+  background: var(--ink-950);
+  color-scheme: dark;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  /* next/font injects its variables on <body>, so composite stacks must be
+     defined here — :root cannot see them. */
+  --font-display: var(--font-space-grotesk), var(--font-noto-sans), sans-serif;
+  --font-body: var(--font-noto-sans), sans-serif;
+  --font-kn: var(--font-noto-kannada), var(--font-noto-sans), sans-serif;
+  background:
+    radial-gradient(1200px 480px at 70% -10%, rgba(201, 242, 77, 0.055), transparent 62%),
+    radial-gradient(900px 500px at 8% 108%, rgba(69, 217, 195, 0.045), transparent 60%),
+    var(--ink-950);
+  color: var(--text-hi);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.55;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, textarea, select { font: inherit; color: inherit; }
+a { color: inherit; }
+img { max-width: 100%; display: block; }
+
+::selection { color: var(--text-on-accent); background: var(--lime); }
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ── Typographic scale ────────────────────────────────────────────────────── */
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  color: var(--text-hi);
+  margin: 0;
+}
+
+.display-1 {
+  font-size: clamp(2.6rem, 6vw, 4.6rem);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+}
+
+.display-2 {
+  font-size: clamp(1.9rem, 3.6vw, 2.8rem);
+  font-weight: 700;
+  line-height: 1.06;
+  letter-spacing: -0.025em;
+}
+
+.title {
+  font-size: clamp(1.15rem, 2vw, 1.45rem);
+  font-weight: 650;
+  line-height: 1.18;
+  letter-spacing: -0.015em;
+}
+
+.numeral {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.eyebrow {
+  margin: 0 0 var(--space-2);
+  color: var(--text-lo);
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.muted { color: var(--text-mid); }
+.danger-text { color: var(--red); }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 2000;
+  padding: 10px 16px;
+  border-radius: var(--r-sm);
+  background: var(--lime);
+  color: var(--text-on-accent);
+  font-weight: 700;
+  text-decoration: none;
+  transform: translateY(-260%);
+  transition: transform var(--t-fast) var(--ease-out);
+}
+.skip-link:focus-visible { transform: translateY(0); }
+
+/* ── Scrollbars (dark chrome) ─────────────────────────────────────────────── */
+
+* { scrollbar-width: thin; scrollbar-color: var(--ink-600) transparent; }
+*::-webkit-scrollbar { width: 9px; height: 9px; }
+*::-webkit-scrollbar-thumb { background: var(--ink-600); border-radius: 99px; border: 2px solid transparent; background-clip: content-box; }
+*::-webkit-scrollbar-track { background: transparent; }
+
+/* ── Reduced motion: gentler, not zero ────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 80ms !important;
+  }
+}

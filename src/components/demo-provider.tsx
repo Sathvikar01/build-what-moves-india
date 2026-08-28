@@ -63,7 +63,12 @@ export function DemoProvider({children}:{children:ReactNode}){
     finally{inflight.current--}
   },[syncFromApi]);
 
-  useEffect(()=>{void syncFromApi();const timer=setInterval(()=>void syncFromApi(),2000);return()=>clearInterval(timer)},[syncFromApi]);
+  useEffect(()=>{
+    // Defer the first sync off the commit phase (lint: set-state-in-effect).
+    queueMicrotask(()=>void syncFromApi());
+    const timer=setInterval(()=>void syncFromApi(),2000);
+    return()=>clearInterval(timer);
+  },[syncFromApi]);
 
   const reset=useCallback(()=>{setState(createDemoState());appliedSyncKey.current=null;void push("/api/demo/reset",{},"bbmp")},[push]);
   const reoptimize=useCallback((trigger="manual_reoptimization")=>{setState(prev=>{const route=optimizeRoutes(prev.vehicles,toWorkStops(prev),trigger,prev.seed,prev.route);return {...prev,route,lastAction:"Route update available",events:appendEvents(prev,[{type:"route.revised",entityId:route.id,message:`Route revised because of ${trigger.replaceAll("_"," ")}.`}])};});void push("/api/routing/optimize",{trigger},"bbmp")},[push]);

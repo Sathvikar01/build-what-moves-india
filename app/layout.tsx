@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { Noto_Sans, Noto_Sans_Kannada } from "next/font/google";
-import "./globals.css";
-import "./proof.css";
+import { Noto_Sans, Noto_Sans_Kannada, Space_Grotesk } from "next/font/google";
 import "leaflet/dist/leaflet.css";
+import "./globals.css";
 import { DemoProvider } from "../src/components/demo-provider";
 import { AuthProvider } from "../src/components/auth";
 
 const notoSans = Noto_Sans({ variable: "--font-noto-sans", subsets: ["latin"] });
 const notoKannada = Noto_Sans_Kannada({ variable: "--font-noto-kannada", subsets: ["kannada"] });
+const spaceGrotesk = Space_Grotesk({ variable: "--font-space-grotesk", subsets: ["latin"] });
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
@@ -19,5 +19,5 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en"><body className={`${notoSans.variable} ${notoKannada.variable}`}><AuthProvider><DemoProvider>{children}</DemoProvider></AuthProvider></body></html>;
+  return <html lang="en"><body className={`${notoSans.variable} ${notoKannada.variable} ${spaceGrotesk.variable}`}><AuthProvider><DemoProvider>{children}</DemoProvider></AuthProvider></body></html>;
 }
