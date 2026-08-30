@@ -97,7 +97,7 @@ export default function Home() {
           <span>Wards 28–50 · GBA 2025</span>
           <span>{copy.badge}</span>
         </div>
-        <h1 className="mast-headline mast-wipe rise"><HeroHeadline text={copy.hero} /></h1>
+        <h1 className="mast-headline rise"><HeroHeadline text={copy.hero} /></h1>
         <div className="mast-under">
           <p className="mast-deck rise rise-1">{copy.sub}</p>
           <div className="mast-actions rise rise-2">

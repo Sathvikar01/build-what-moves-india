@@ -1,8 +1,7 @@
 /* ============================================================================
-   MUNICIPAL WORKS — base
-   Reset, industrial typographic scale, accessibility primitives, leaflet base.
-   Macro type: heavy grotesque, uppercase, compressed.
-   Micro type: monospace telemetry labels, uppercase, tracked wide.
+   PREMIUM LIGHT — base
+   Reset, product typographic scale, accessibility primitives.
+   Inter everywhere; sentence case; numbers tabular; one accent, used sparingly.
    ========================================================================== */
 
 *,
@@ -19,10 +18,10 @@ body {
   margin: 0;
   /* next/font injects its variables on <body>, so composite stacks must be
      defined here — :root cannot see them. */
-  --font-display: var(--font-archivo), "Archivo", "Helvetica Neue", Arial, sans-serif;
-  --font-body: var(--font-archivo), var(--font-noto-kannada), system-ui, sans-serif;
-  --font-mono: var(--font-jbmono), ui-monospace, "Cascadia Mono", "Courier New", monospace;
-  --font-kn: var(--font-noto-kannada), var(--font-archivo), sans-serif;
+  --font-display: var(--font-inter), "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-body: var(--font-inter), var(--font-noto-kannada), system-ui, sans-serif;
+  --font-mono: var(--font-jbmono), ui-monospace, "Cascadia Mono", monospace;
+  --font-kn: var(--font-noto-kannada), var(--font-inter), sans-serif;
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-body);
@@ -30,6 +29,7 @@ body {
   line-height: 1.55;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 button, input, textarea, select { font: inherit; color: inherit; }
@@ -39,63 +39,58 @@ img { max-width: 100%; display: block; }
 ::selection { color: var(--on-accent); background: var(--accent); }
 
 :focus-visible {
-  outline: 2px solid var(--ink);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
+  border-radius: 4px;
 }
 
-/* ── Industrial typographic scale ─────────────────────────────────────────── */
+input, textarea, select { caret-color: var(--accent); }
+
+/* ── Product typographic scale ────────────────────────────────────────────── */
 
 h1, h2, h3 {
   font-family: var(--font-display);
   color: var(--ink);
   margin: 0;
   text-wrap: balance;
+  letter-spacing: -0.015em;
 }
 
 .display-1 {
-  font-size: clamp(2.6rem, 7vw, 5.6rem);
-  font-weight: 900;
-  line-height: 0.94;
+  font-size: clamp(2.3rem, 5vw, 3.9rem);
+  font-weight: 700;
+  line-height: 1.05;
   letter-spacing: -0.03em;
-  text-transform: uppercase;
 }
 
 .display-2 {
-  font-size: clamp(1.8rem, 4vw, 3rem);
-  font-weight: 900;
-  line-height: 0.96;
+  font-size: clamp(1.7rem, 3.4vw, 2.5rem);
+  font-weight: 700;
+  line-height: 1.1;
   letter-spacing: -0.025em;
-  text-transform: uppercase;
 }
 
 .title {
   font-family: var(--font-display);
-  font-size: clamp(1.12rem, 2vw, 1.42rem);
-  font-weight: 800;
-  line-height: 1.1;
-  letter-spacing: -0.015em;
-  text-transform: uppercase;
+  font-size: clamp(1.1rem, 1.9vw, 1.35rem);
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: -0.012em;
 }
 
 .numeral {
-  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
 }
 
-/* Metadata lines are mono telemetry, never kickers — they carry real facts
-   (zone, shift, algorithm id) and sit only where those facts matter. */
+/* Small section label — plain, quiet, optional. */
 .eyebrow {
   margin: 0 0 var(--space-2);
   color: var(--ink-lo);
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 0.8rem;
+  font-weight: 550;
+  letter-spacing: 0.01em;
 }
-
-input, textarea, select { caret-color: var(--accent); }
 
 .muted { color: var(--ink-mid); }
 .danger-text { color: var(--red); }
@@ -117,23 +112,23 @@ input, textarea, select { caret-color: var(--accent); }
   left: 10px;
   z-index: 2000;
   padding: 10px 16px;
-  background: var(--ink);
-  color: var(--paper);
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  border-radius: var(--r-md);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 0.82rem;
+  font-weight: 600;
   text-decoration: none;
+  box-shadow: var(--shadow-2);
   transform: translateY(-260%);
   transition: transform var(--t-fast) var(--ease-out);
 }
 .skip-link:focus-visible { transform: translateY(0); }
 
-/* ── Scrollbars (machine chrome) ──────────────────────────────────────────── */
+/* ── Scrollbars (quiet product chrome) ────────────────────────────────────── */
 
 * { scrollbar-width: thin; scrollbar-color: var(--edge) transparent; }
 *::-webkit-scrollbar { width: 9px; height: 9px; }
-*::-webkit-scrollbar-thumb { background: var(--edge); border: 2px solid transparent; background-clip: content-box; }
+*::-webkit-scrollbar-thumb { background: var(--edge); border-radius: 99px; border: 2px solid transparent; background-clip: content-box; }
 *::-webkit-scrollbar-track { background: transparent; }
 
 /* ── Reduced motion: gentler, not zero ────────────────────────────────────── */

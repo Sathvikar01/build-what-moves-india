@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Archivo, JetBrains_Mono, Noto_Sans_Kannada } from "next/font/google";
+import { Inter, JetBrains_Mono, Noto_Sans_Kannada } from "next/font/google";
 import "leaflet/dist/leaflet.css";
 import "./globals.css";
 import { DemoProvider } from "../src/components/demo-provider";
 import { AuthProvider } from "../src/components/auth";
 
-const archivo = Archivo({ variable: "--font-archivo", subsets: ["latin"] });
+const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
 const jetbrainsMono = JetBrains_Mono({ variable: "--font-jbmono", subsets: ["latin"] });
 const notoKannada = Noto_Sans_Kannada({ variable: "--font-noto-kannada", subsets: ["kannada"] });
 
@@ -19,5 +19,5 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en"><body className={`${archivo.variable} ${jetbrainsMono.variable} ${notoKannada.variable}`}><AuthProvider><DemoProvider>{children}</DemoProvider></AuthProvider></body></html>;
+  return <html lang="en"><body className={`${inter.variable} ${jetbrainsMono.variable} ${notoKannada.variable}`}><AuthProvider><DemoProvider>{children}</DemoProvider></AuthProvider></body></html>;
 }

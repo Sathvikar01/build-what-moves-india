@@ -1,96 +1,92 @@
 /* ============================================================================
-   MUNICIPAL WORKS — design tokens
-   Swiss industrial print crossed with Bengaluru field-operations signage.
-   Unbleached newsprint substrate, carbon ink, one hazard-red accent.
-   No rounded corners anywhere. No soft shadows anywhere.
-   Every color, line, and duration in the product resolves from here.
+   PREMIUM LIGHT — design tokens
+   Stripe/Linear-grade light product UI with one confident civic-green accent.
+   White surfaces on soft neutral ground, hairline borders, quiet layered
+   depth, generous radius. Color is functional: green acts, statuses report.
    ========================================================================== */
 
 :root {
-  /* ── Substrate (matte documentation paper — cells divide, never float) ── */
-  --paper: #f2f1ec;
-  --paper-2: #e9e8e1;
-  --card: #f6f5f0;
-  --card-2: #ecebe4;
-  --card-3: #e4e3db;
-  --well: #e0dfd6;
-  --edge: #b8b6ab;
+  /* ── Ground & surfaces ─────────────────────────────────────────────────── */
+  --paper: #f7f7f5;
+  --paper-2: #f1f1ee;
+  --card: #ffffff;
+  --card-2: #fafaf9;
+  --card-3: #f5f5f4;
+  --well: #f0efec;
+  --edge: #d7d6d2;
 
-  /* ── Lines (carbon ink rules do the structural work) ──────────────────── */
-  --line: rgba(17, 17, 16, 0.18);
-  --line-strong: rgba(17, 17, 16, 0.72);
-  --line-accent: rgba(196, 22, 22, 0.55);
+  /* ── Lines ─────────────────────────────────────────────────────────────── */
+  --line: #e8e7e3;
+  --line-strong: #d9d8d3;
+  --line-accent: rgba(13, 148, 104, 0.35);
 
-  /* ── Ink (text) ───────────────────────────────────────────────────────── */
-  --ink: #12120f;
-  --ink-mid: #3c3b36;
-  --ink-lo: #6f6e66;
-  --on-accent: #f6f5f0;
+  /* ── Ink ───────────────────────────────────────────────────────────────── */
+  --ink: #191917;
+  --ink-mid: #5b5954;
+  --ink-lo: #8f8d86;
+  --on-accent: #ffffff;
 
-  /* ── Hazard red — the one accent. Strike-throughs, vital data, CTAs. ──── */
-  --accent: #c41a16;
-  --accent-bright: #e62219;
-  --accent-deep: #99100d;
-  --accent-soft: rgba(196, 22, 22, 0.08);
-  --accent-edge: rgba(196, 22, 22, 0.45);
+  /* ── Civic green — the one brand accent: primary actions, live, focus ──── */
+  --accent: #0d9468;
+  --accent-bright: #10b981;
+  --accent-deep: #0a7350;
+  --accent-soft: rgba(13, 148, 104, 0.08);
+  --accent-edge: rgba(13, 148, 104, 0.32);
 
-  /* ── Functional status hues (equipment tags, not decoration) ──────────── */
-  --amber: #9a6a00;
-  --amber-soft: rgba(154, 106, 0, 0.12);
-  --red: #c41a16;
-  --red-soft: rgba(196, 22, 22, 0.09);
-  --teal: #0d6e62;
-  --teal-soft: rgba(13, 110, 98, 0.1);
-  --violet: #584a8f;
-  --violet-soft: rgba(88, 74, 143, 0.1);
-  --blue: #24549c;
-  --blue-soft: rgba(36, 84, 156, 0.1);
-  --focus: #12120f;
+  /* ── Status hues (soft tinted chips, dot + label) ──────────────────────── */
+  --amber: #b45309;
+  --amber-soft: rgba(217, 119, 6, 0.1);
+  --red: #dc2626;
+  --red-soft: rgba(220, 38, 38, 0.08);
+  --teal: #0d9488;
+  --teal-soft: rgba(13, 148, 136, 0.09);
+  --violet: #7c3aed;
+  --violet-soft: rgba(124, 58, 237, 0.08);
+  --blue: #2563eb;
+  --blue-soft: rgba(37, 99, 235, 0.08);
+  --focus: #0d9468;
 
-  /* ── Materials (flat — opacity without blur, depth without shadow) ────── */
-  --glass-bg: rgba(242, 241, 236, 0.94);
-  --glass-bg-strong: #f2f1ec;
-  --glass-blur: none;
-  --glass-edge: rgba(17, 17, 16, 0.16);
-  --glass-edge-hi: rgba(17, 17, 16, 0.4);
+  /* ── Materials ─────────────────────────────────────────────────────────── */
+  --glass-bg: rgba(255, 255, 255, 0.82);
+  --glass-bg-strong: rgba(255, 255, 255, 0.95);
+  --glass-blur: blur(14px) saturate(140%);
+  --glass-edge: rgba(25, 25, 23, 0.08);
+  --glass-edge-hi: rgba(25, 25, 23, 0.14);
 
-  /* ── Depth: NONE. Structure comes from rules and compartmentalization. ── */
-  --shadow-1: none;
-  --shadow-2: none;
-  --shadow-accent: none;
+  /* ── Depth: quiet, layered, warm-neutral. Never heavy. ─────────────────── */
+  --shadow-1: 0 1px 2px rgba(25, 23, 20, 0.04), 0 2px 8px rgba(25, 23, 20, 0.04);
+  --shadow-2: 0 2px 4px rgba(25, 23, 20, 0.05), 0 12px 32px rgba(25, 23, 20, 0.09);
+  --shadow-accent: 0 4px 14px rgba(13, 148, 104, 0.22);
 
-  /* ── Motion (mechanical, quick, no bounce) ─────────────────────────────── */
-  --ease-out: cubic-bezier(0.2, 0.9, 0.3, 1);
-  --ease-inout: cubic-bezier(0.77, 0, 0.175, 1);
+  /* ── Motion: soft, fast, springy-out ───────────────────────────────────── */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-inout: cubic-bezier(0.65, 0, 0.35, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
-  --t-fast: 100ms;
-  --t-med: 160ms;
-  --t-slow: 240ms;
+  --t-fast: 130ms;
+  --t-med: 190ms;
+  --t-slow: 280ms;
 
-  /* ── Shape: mechanical rigidity. Every corner 90 degrees. ──────────────── */
-  --r-sm: 0px;
-  --r-md: 0px;
-  --r-lg: 0px;
-  --r-xl: 0px;
-  --r-pill: 0px;
+  /* ── Shape: proper product radius ──────────────────────────────────────── */
+  --r-sm: 8px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 18px;
+  --r-pill: 999px;
 
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
   --space-5: 20px;
-  --space-6: 28px;
-  --space-7: 40px;
-  --space-8: 56px;
-
-  /* ── Typography: next/font variables arrive on <body>; composite stacks
-        are defined there (see base.css). ─────────────────────────────────── */
+  --space-6: 26px;
+  --space-7: 38px;
+  --space-8: 54px;
 }
 
 @media (prefers-reduced-transparency: reduce) {
   :root {
-    --glass-bg: rgba(242, 241, 236, 0.98);
-    --glass-bg-strong: #f2f1ec;
+    --glass-bg: rgba(255, 255, 255, 0.98);
+    --glass-bg-strong: #ffffff;
     --glass-blur: none;
   }
 }
