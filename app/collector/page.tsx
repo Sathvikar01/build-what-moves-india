@@ -69,51 +69,72 @@ export default function CollectorPage(){
 
   if(!ready) return <AtlasShell role="collector"><div className="page-wrap"><SkeletonBlock rows={3}/></div></AtlasShell>;
 
+  // Route sheet: progress strip up top, map floor below, action rail on the right.
   return <AtlasShell role="collector">
-    <div className="atlas-split" lang={locale==="kn"?"kn":"en"}>
-      <section className="atlas-map">
-        <BengaluruMap markers={markers} route={state.route.roadPathByVehicle.find(v=>v.vehicleId===route?.vehicleId)?.path??state.route.roadPath} vehiclePaths={state.route.roadPathByVehicle.filter(v=>v.vehicleId===route?.vehicleId)} geometrySource={state.route.roadGeometrySource} tripStatus={tripStatusFor(state)} userLocation={state.userLocation?.location??MOCK_USER_LOCATION} height="100%"/>
+    <div className="route-desk" lang={locale==="kn"?"kn":"en"}>
+      <section className="route-strip" aria-label="Route progress">
+        <div className="route-strip-id">
+          <p className="eyebrow">{copy.shift} · {vehicle.label}</p>
+          <strong>{copy.next} {next?next.locality:copy.complete}</strong>
+        </div>
+        <ol className="route-ticks" aria-hidden="true">
+          {route?.stops.map(stop=>(
+            <li key={stop.id} className={`tick tick-${stop.status}${next&&stop.id===next.id?" tick-now":""}`}>
+              <b>{stop.sequence}</b>
+              <i/>
+            </li>
+          ))}
+        </ol>
+        <div className="route-strip-progress">
+          <strong>{collected}/{route?.stops.length??0}</strong>
+          <span>{copy.collected}</span>
+          <em>v{state.route.version}</em>
+        </div>
       </section>
-      <aside className="atlas-rail">
-        <section className="collector-summary">
-          <div><p className="eyebrow">{copy.shift} · {vehicle.label}</p><h1>{next?`${copy.next} ${next.locality}`:copy.complete}</h1><p>{next?.label??copy.allDone}</p></div>
-          <div className="progress-orb"><strong>{collected}/{route?.stops.length??0}</strong><span>{copy.collected}</span></div>
+      <div className="route-body">
+        <section className="route-map" aria-label="Assigned route map">
+          <BengaluruMap markers={markers} route={state.route.roadPathByVehicle.find(v=>v.vehicleId===route?.vehicleId)?.path??state.route.roadPath} vehiclePaths={state.route.roadPathByVehicle.filter(v=>v.vehicleId===route?.vehicleId)} geometrySource={state.route.roadGeometrySource} tripStatus={tripStatusFor(state)} userLocation={state.userLocation?.location??MOCK_USER_LOCATION} height="100%"/>
         </section>
-        <div className="revision-banner"><Route size={20}/><div><strong>{copy.route} v{state.route.version} · {state.route.status}</strong><p>{state.route.trigger.replaceAll("_"," ")}. {copy.revisionNote}</p></div><button data-testid="collector-acknowledge" type="button" onClick={()=>setAcknowledged(true)} aria-pressed={acknowledged} disabled={acknowledged||busy}>{acknowledged?copy.acknowledged:copy.acknowledge}</button></div>
-        <Toast notice={notice} onDone={()=>setNotice(undefined)}/>
-        {next&&<section className="panel next-stop-card">
-          <div className="section-heading"><p className="eyebrow">{copy.stop} {next.sequence??"—"} · {copy.eta} {etaMinutes} {copy.minutes}</p><h2 className="title">{next.label}</h2></div>
-          <div className="stop-facts"><span><MapPin/> {next.locality}</span><span><PackageCheck/> {next.volumeLitres.toFixed(0)} {copy.expected}</span><span><Navigation/> {kmLeft} {copy.estimated}</span></div>
-          <div className="why-box"><strong>{copy.why}</strong><p>{next.explanation}</p><div className="contribution-row">{next.contributions.map(c=><span key={c.signal}><b>{c.contribution}</b>{c.label}</span>)}</div></div>
-          <div className="collector-actions">
-            {next.status!=="arrived"&&<button data-testid="collector-arrive" className="primary-button" disabled={busy} onClick={()=>act("arrived")}><Navigation/>{copy.arrive}</button>}
-            {next.status==="arrived"&&<button data-testid="collector-collect" className="primary-button" disabled={busy} onClick={()=>{act("collected");setProofOpen(true);setBefore(undefined);setAfter(undefined);setGps(undefined);setChecked(false);setProofStatus("")}}><CheckCircle2/>{copy.collect}</button>}
-            <button className="secondary-button danger-text" disabled={busy} onClick={()=>act("blocked")}><AlertOctagon/>{copy.blocked}</button>
-          </div>
-        </section>}
-        {proofOpen&&next&&<section className="panel proof-panel">
-          <div>
-            <p className="eyebrow">{copy.proofEyebrow}</p><h2 className="title">{copy.proofTitle}</h2>
-            <p className="muted">Before/after evidence is re-encoded in the browser and persisted privately. Recorded coordinates and every checklist item are required before the report can become cleaned.</p>
-            {proofStatus==="error"&&<p className="danger-text" role="alert">Proof could not be stored. Evidence remains on this device; retry to continue.</p>}
-          </div>
-          <div>
-            <div className="proof-grid">
-              <label className={before?"proof-captured":""}><Camera/><strong>{copy.before}</strong><span>{before?"Prepared · metadata removed":copy.choose}</span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e=>void choose(e.target.files?.[0],setBefore)}/></label>
-              <label className={after?"proof-captured":""}><Camera/><strong>{copy.after}</strong><span>{after?"Prepared · metadata removed":copy.choose}</span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e=>void choose(e.target.files?.[0],setAfter)}/></label>
-              <button type="button" className={gps?"proof-captured":""} onClick={()=>{const fallback=()=>setGps({coords:next.location??vehicle.location,mode:"demo"});if(!navigator.geolocation){fallback();return}navigator.geolocation.getCurrentPosition(position=>setGps({coords:{lat:position.coords.latitude,lng:position.coords.longitude},mode:"captured"}),fallback,{enableHighAccuracy:true,timeout:5000,maximumAge:0})}}><MapPin/><strong>{copy.gps}</strong><span>{gps?.mode==="captured"?`Captured · ${gps.coords.lat.toFixed(4)}, ${gps.coords.lng.toFixed(4)}`:gps?.mode==="demo"?"Demo stop coordinate · permission unavailable":copy.capture}</span></button>
+        <aside className="route-rail">
+          <div className="revision-banner"><Route size={20}/><div><strong>{copy.route} v{state.route.version} · {state.route.status}</strong><p>{state.route.trigger.replaceAll("_"," ")}. {copy.revisionNote}</p></div><button data-testid="collector-acknowledge" type="button" onClick={()=>setAcknowledged(true)} aria-pressed={acknowledged} disabled={acknowledged||busy}>{acknowledged?copy.acknowledged:copy.acknowledge}</button></div>
+          <Toast notice={notice} onDone={()=>setNotice(undefined)}/>
+          {next&&<section className="panel next-stop-card">
+            <div className="next-card-head">
+              <span className="next-number" aria-hidden="true">{next.sequence}</span>
+              <div className="section-heading"><p className="eyebrow">{copy.stop} · {copy.eta} {etaMinutes} {copy.minutes}</p><h2 className="title">{next.label}</h2></div>
             </div>
-            <label className="proof-check"><input type="checkbox" checked={checked} onChange={e=>setChecked(e.target.checked)}/>{copy.checklist}</label>
-            <button data-testid="proof-submit" className="primary-button wide-button" style={{marginTop:"var(--space-4)"}} disabled={!before||!after||!gps||!checked||proofStatus==="uploading"} onClick={()=>void submitProof()}><UploadCloud/>{proofStatus==="uploading"?copy.storing:copy.submitProof}</button>
-          </div>
-        </section>}
-        <section className="panel">
-          <div className="section-heading"><p className="eyebrow">{copy.stopsEyebrow}</p><h2 className="title">{copy.stopsTitle}</h2></div>
-          <ol className="stop-list">{route?.stops.map(stop=>(
-            <li key={stop.id}><span className="stop-sequence">{stop.sequence}</span><div className="stop-main"><strong>{stop.label}</strong><small>{stop.locality} · {stop.etaMinutes} {copy.minutes}</small><span className={`status-chip status-${stop.status}`}>{stop.status.replaceAll("_"," ")}</span></div></li>
-          ))}</ol>
-        </section>
-      </aside>
+            <div className="stop-facts"><span><MapPin/> {next.locality}</span><span><PackageCheck/> {next.volumeLitres.toFixed(0)} {copy.expected}</span><span><Navigation/> {kmLeft} {copy.estimated}</span></div>
+            <div className="why-box"><strong>{copy.why}</strong><p>{next.explanation}</p><div className="contribution-row">{next.contributions.map(c=><span key={c.signal}><b>{c.contribution}</b>{c.label}</span>)}</div></div>
+            <div className="collector-actions">
+              {next.status!=="arrived"&&<button data-testid="collector-arrive" className="primary-button" disabled={busy} onClick={()=>act("arrived")}><Navigation/>{copy.arrive}</button>}
+              {next.status==="arrived"&&<button data-testid="collector-collect" className="primary-button" disabled={busy} onClick={()=>{act("collected");setProofOpen(true);setBefore(undefined);setAfter(undefined);setGps(undefined);setChecked(false);setProofStatus("")}}><CheckCircle2/>{copy.collect}</button>}
+              <button className="secondary-button danger-text" disabled={busy} onClick={()=>act("blocked")}><AlertOctagon/>{copy.blocked}</button>
+            </div>
+          </section>}
+          {proofOpen&&next&&<section className="panel proof-panel">
+            <div>
+              <p className="eyebrow">{copy.proofEyebrow}</p><h2 className="title">{copy.proofTitle}</h2>
+              <p className="muted">Before/after evidence is re-encoded in the browser and persisted privately. Recorded coordinates and every checklist item are required before the report can become cleaned.</p>
+              {proofStatus==="error"&&<p className="danger-text" role="alert">Proof could not be stored. Evidence remains on this device; retry to continue.</p>}
+            </div>
+            <div>
+              <div className="proof-grid">
+                <label className={before?"proof-captured":""}><Camera/><strong>{copy.before}</strong><span>{before?"Prepared · metadata removed":copy.choose}</span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e=>void choose(e.target.files?.[0],setBefore)}/></label>
+                <label className={after?"proof-captured":""}><Camera/><strong>{copy.after}</strong><span>{after?"Prepared · metadata removed":copy.choose}</span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e=>void choose(e.target.files?.[0],setAfter)}/></label>
+                <button type="button" className={gps?"proof-captured":""} onClick={()=>{const fallback=()=>setGps({coords:next.location??vehicle.location,mode:"demo"});if(!navigator.geolocation){fallback();return}navigator.geolocation.getCurrentPosition(position=>setGps({coords:{lat:position.coords.latitude,lng:position.coords.longitude},mode:"captured"}),fallback,{enableHighAccuracy:true,timeout:5000,maximumAge:0})}}><MapPin/><strong>{copy.gps}</strong><span>{gps?.mode==="captured"?`Captured · ${gps.coords.lat.toFixed(4)}, ${gps.coords.lng.toFixed(4)}`:gps?.mode==="demo"?"Demo stop coordinate · permission unavailable":copy.capture}</span></button>
+              </div>
+              <label className="proof-check"><input type="checkbox" checked={checked} onChange={e=>setChecked(e.target.checked)}/>{copy.checklist}</label>
+              <button data-testid="collector-submit-proof" type="button" className="primary-button wide-button" disabled={!before||!after||!gps||!checked||proofStatus==="uploading"||busy} onClick={()=>void submitProof()}><UploadCloud size={18}/>{proofStatus==="uploading"?copy.storing:copy.submitProof}</button>
+            </div>
+          </section>}
+          <section className="panel manifest-panel">
+            <div className="section-heading"><p className="eyebrow">{copy.stopsEyebrow}</p><h2 className="title">{copy.stopsTitle}</h2></div>
+            <ol className="stop-list">{route?.stops.map(stop=>(
+              <li key={stop.id}><span className="stop-sequence">{stop.sequence}</span><div className="stop-main"><strong>{stop.label}</strong><small>{stop.locality} · {stop.etaMinutes} {copy.minutes}</small><span className={`status-chip status-${stop.status}`}>{stop.status.replaceAll("_"," ")}</span></div></li>
+            ))}</ol>
+          </section>
+        </aside>
+      </div>
     </div>
   </AtlasShell>;
 }

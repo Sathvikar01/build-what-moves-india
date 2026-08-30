@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { ArrowRight, Building2, ChevronDown, MapPin, Recycle, Route, ShieldCheck } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Building2, MapPin, Recycle, Route, ShieldCheck } from "lucide-react";
 import { BengaluruMap, MOCK_USER_LOCATION, type MapMarker } from "../src/components/bengaluru-map";
 import { routeOnRoads } from "../src/domain/road-graph";
 import { LOCATION_SOURCE } from "../src/data/locations";
@@ -53,7 +53,7 @@ function HeroHeadline({ text }: { text: string }) {
 export default function Home() {
   const { locale, setLocale } = useDemo();
   const copy = uiCopy[locale].landing;
-  // Live-from-seed numbers: the map strip and the civic loop both read from
+  // Live-from-seed numbers: the masthead board and the ledger both read from
   // the same deterministic scenario the consoles run — no hand-written stats.
   const summary = useMemo(() => {
     const trip = tripStatusFor(seedState);
@@ -75,8 +75,7 @@ export default function Home() {
     seedState.reports.filter(report => report.status === "confirmed").length,
   ], []);
   return (
-    <main className="landing-shell" lang={locale === "kn" ? "kn" : "en"}>
-      <div className="hero-atmosphere" aria-hidden="true" />
+    <main className="paper-front" lang={locale === "kn" ? "kn" : "en"}>
       <a className="skip-link" href="#main-content">Skip to main content</a>
       <header className="site-header">
         <Link className="brand" href="/" aria-label="Bengaluru Smart Waste home">
@@ -91,71 +90,83 @@ export default function Home() {
         </nav>
       </header>
 
-      {/* First screen IS the map. Content floats on glass above it. */}
-      <section className="landing-hero" id="main-content">
-        <div className="hero-map-layer" aria-hidden="false">
-          <BengaluruMap markers={landingMarkers} route={landingRoadRoute} vehiclePaths={[{ vehicleId: landingVehicle.id, path: landingRoadRoute }]} userLocation={seedState.userLocation?.location ?? MOCK_USER_LOCATION} height="100%" interactive={false} />
+      {/* Broadsheet masthead: the paper opens with type, not a map. */}
+      <section className="mast" id="main-content">
+        <div className="mast-rule" aria-hidden="true">
+          <span>Mahadevapura pilot</span>
+          <span>Wards 28–50 · GBA 2025</span>
+          <span>{copy.badge}</span>
         </div>
-        <div className="hero-overlay">
-          <div className="hero-overlay-copy">
-            <h1 className="rise"><HeroHeadline text={copy.hero} /></h1>
-            <p className="rise rise-1">{copy.sub}</p>
-            <div className="hero-actions rise rise-2">
-              <a className="landing-button landing-button-primary" href="/citizen" data-testid="hero-citizen">
-                {copy.primaryAction} <ArrowRight size={18} aria-hidden="true" />
-              </a>
-              <a className="landing-button landing-button-secondary" href="/bbmp" data-testid="hero-operations">
-                {copy.secondaryAction}
-              </a>
-            </div>
+        <h1 className="mast-headline rise"><HeroHeadline text={copy.hero} /></h1>
+        <div className="mast-under">
+          <p className="mast-deck rise rise-1">{copy.sub}</p>
+          <div className="mast-actions rise rise-2">
+            <a className="landing-button landing-button-primary" href="/citizen" data-testid="hero-citizen">
+              {copy.primaryAction} <ArrowRight size={18} aria-hidden="true" />
+            </a>
+            <a className="landing-button landing-button-secondary" href="/bbmp" data-testid="hero-operations">
+              {copy.secondaryAction}
+            </a>
           </div>
-          <div className="hero-dock rise rise-3">
-            <span className="stat"><strong>{summary.locations}</strong> {copy.locations}</span>
-            <span className="stat"><strong>{summary.revisions}</strong> {copy.routeRevision}</span>
-            <span className="stat"><strong>{summary.nearest}</strong> {copy.nearest}</span>
-            <span className="spacer" />
-            <span className="source-chip"><MapPin size={12} aria-hidden="true" /> {LOCATION_SOURCE.label}</span>
-            <a className="scroll-cue" href="#loop" aria-label="Scroll to how it works"><ChevronDown size={16} aria-hidden="true" /></a>
-          </div>
+        </div>
+        <dl className="mast-board rise rise-3">
+          <div><dt>{copy.locations}</dt><dd>{summary.locations}</dd></div>
+          <div><dt>{copy.routeRevision}</dt><dd>{summary.revisions}</dd></div>
+          <div><dt>{copy.nearest}</dt><dd>{summary.nearest}</dd></div>
+          <div className="board-source"><dt>Data</dt><dd><MapPin size={12} aria-hidden="true" /> {LOCATION_SOURCE.label}</dd></div>
+        </dl>
+      </section>
+
+      {/* The map returns as a captioned figure, the way a report prints one. */}
+      <section className="map-figure" aria-label="Live pilot map">
+        <div className="map-figure-caption">
+          <span className="fig-no">Fig. 01</span>
+          <strong>Live operations board</strong>
+          <span>{summary.nearest} · nearest collection</span>
+          <a className="fig-link" href="/citizen">Open citizen map <ArrowUpRight size={14} aria-hidden="true" /></a>
+        </div>
+        <div className="map-figure-stage">
+          <BengaluruMap markers={landingMarkers} route={landingRoadRoute} vehiclePaths={[{ vehicleId: landingVehicle.id, path: landingRoadRoute }]} userLocation={seedState.userLocation?.location ?? MOCK_USER_LOCATION} height="100%" interactive={false} />
         </div>
       </section>
 
-      {/* The civic loop, counted live from the seeded scenario */}
-      <section className="loop-section" id="loop" aria-label="How the loop works">
-        <div className="loop-heading">
+      {/* The civic loop printed as a numbered ledger with live counts */}
+      <section className="ledger" id="loop" aria-label="How the loop works">
+        <div className="ledger-head">
           <p className="eyebrow">{copy.badge}</p>
           <h2 className="rise">{copy.truth[2][0]}</h2>
         </div>
-        <div className="loop-strip">
+        <ol className="ledger-rows">
           {loopSteps.map((label, index) => (
-            <div className={`loop-step rise rise-${Math.min(index + 1, 5)}`} key={label}>
+            <li className={`ledger-row rise rise-${Math.min(index + 1, 5)}`} key={label}>
               <i aria-hidden="true">{String(index + 1).padStart(2, "0")}</i>
               <strong>{label}</strong>
-              <b>{loopCounts[index]}</b>
-            </div>
+              <span className="ledger-count" aria-label={`${loopCounts[index]} live`}><b>{loopCounts[index]}</b><small>on the board</small></span>
+            </li>
           ))}
-        </div>
+        </ol>
         <p className="loop-note">{copy.footerTag} · seed 4242</p>
       </section>
 
-      <section className="role-section" aria-labelledby="choose-role">
-        <div className="role-heading">
+      {/* Roles as a table-of-contents: full-width index rows, not cards */}
+      <section className="role-index" aria-labelledby="choose-role">
+        <div className="index-heading">
           <h2 id="choose-role">{copy.chooseTitle}</h2>
           <p>{copy.chooseSub}</p>
         </div>
-        <div className="role-cards">
+        <div className="index-rows">
           {roleMeta.map((role, index) => {
             const Icon = role.icon;
             const strings = copy.roles[role.key];
             return (
-              <a className={`role-card rise rise-${Math.min(index + 1, 5)}`} href={role.href} key={role.href} style={{ "--card-accent": role.accent } as React.CSSProperties}>
-                <div className="role-card-head">
-                  <span className="role-icon" aria-hidden="true"><Icon size={22} /></span>
-                  <span className="role-card-no" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
-                </div>
-                <strong>{strings.title}</strong>
-                <p>{strings.copy}</p>
-                <span className="role-card-go">{strings.action}<ArrowRight size={16} aria-hidden="true" /></span>
+              <a className={`index-row rise rise-${Math.min(index + 1, 5)}`} href={role.href} key={role.href} style={{ "--card-accent": role.accent } as React.CSSProperties}>
+                <span className="index-no" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
+                <span className="index-icon" aria-hidden="true"><Icon size={24} /></span>
+                <span className="index-copy">
+                  <strong>{strings.title}</strong>
+                  <p>{strings.copy}</p>
+                </span>
+                <span className="index-go">{strings.action}<ArrowRight size={16} aria-hidden="true" /></span>
               </a>
             );
           })}

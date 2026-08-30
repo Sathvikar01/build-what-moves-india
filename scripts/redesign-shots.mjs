@@ -6,7 +6,8 @@ const OUT = "scripts/redesign-shots";
 mkdirSync(OUT, { recursive: true });
 
 const shot = async (page, name, fullPage = true) => {
-  await page.waitForTimeout(1600);
+  await page.waitForSelector('.map-frame[aria-busy="false"]', { timeout: 20000 }).catch(() => {});
+  await page.waitForTimeout(1200);
   await page.screenshot({ path: `${OUT}/${name}.png`, fullPage });
   console.log("shot:", name);
 };

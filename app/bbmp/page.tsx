@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { AlertTriangle, ArrowDownUp, Check, ChevronRight, CircleGauge, MapPinned, Play, RadioTower, RotateCcwSquare, Route, Truck } from "lucide-react";
+import { AlertTriangle, Check, MapPinned, Play, RadioTower, RotateCcwSquare, Route } from "lucide-react";
 import { AtlasShell } from "../../src/components/atlas-shell";
 import { BengaluruMap, type MapMarker } from "../../src/components/bengaluru-map";
 import { PriorityAudit } from "../../src/components/priority-audit";
@@ -41,39 +41,49 @@ export default function BbmpPage(){
 
  if(!ready) return <AtlasShell role="bbmp"><div className="page-wrap"><SkeletonBlock rows={3}/></div></AtlasShell>;
 
+ // Ops desk: vertical section rail on the left, work column on the right.
  return <AtlasShell role="bbmp">
-  <div lang={locale==="kn"?"kn":"en"}>
-  <div className="ops-nav">
-    <div><strong>{copy.navTitle}</strong><span>{copy.navSub}</span></div>
+  <div className="ops-desk" lang={locale==="kn"?"kn":"en"}>
+  <aside className="ops-rail">
+    <div className="ops-rail-brand"><strong>{copy.navTitle}</strong><span>{copy.navSub}</span></div>
     <nav aria-label="Operations sections" role="tablist" ref={tabNav} onKeyDown={e=>{if(e.key==="ArrowRight"){e.preventDefault();moveTab(1)}if(e.key==="ArrowLeft"){e.preventDefault();moveTab(-1)}}}>
-      {tabs.map(item=>(
-        <button key={item.id} id={`tab-${item.id}`} role="tab" aria-selected={tab===item.id} aria-controls={`panel-${item.id}`} tabIndex={tab===item.id?0:-1} className={tab===item.id?"active":""} onClick={()=>setTab(item.id)}>{item.label}</button>
+      {tabs.map((item,index)=>(
+        <button key={item.id} id={`tab-${item.id}`} role="tab" aria-selected={tab===item.id} aria-controls={`panel-${item.id}`} tabIndex={tab===item.id?0:-1} className={tab===item.id?"active":""} onClick={()=>setTab(item.id)}>
+          <i aria-hidden="true">{String(index+1).padStart(2,"0")}</i>{item.label}
+        </button>
       ))}
     </nav>
-  </div>
-  <div className="page-wrap ops-wrap" id="bbmp-main">
-    <div className="live-banner"><RadioTower size={16}/><strong aria-live="polite">{state.lastAction}</strong><span aria-hidden="true">{copy.cursor} {state.events.at(-1)?.cursor} · {copy.seed} {state.seed}</span></div>
+    <div className="ops-rail-foot">
+      <RadioTower size={16} aria-hidden="true"/>
+      <div>
+        <strong aria-live="polite">{state.lastAction}</strong>
+        <small>{copy.cursor} {state.events.at(-1)?.cursor} · {copy.seed} {state.seed}</small>
+      </div>
+    </div>
+  </aside>
+  <div className="ops-main">
     <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
       {tab==="overview"&&<>
-        <section className="impact-strip" aria-label={copy.impact.title}>
-          <ImpactStat label={`${copy.day.day} ${state.dayCycle.day} · ${state.dayCycle.phase==="en_route"?copy.day.collecting:state.dayCycle.phase==="servicing"?copy.day.servicing:copy.day.depot}`} value={state.dayCycle.phase==="at_depot"?`⏱ ${Math.floor(state.dayCycle.nextDepartureInMinutes/60)}h ${state.dayCycle.nextDepartureInMinutes%60}m`:`${state.dayCycle.binsServicedToday} ${copy.day.stopsToday}`}/>
-          <ImpactStat label={copy.day.litresToday} value={`${state.dayCycle.litresCollectedToday} L`}/>
-          <ImpactStat label={copy.day.totalServiced} value={String(state.dayCycle.binsServicedTotal)}/>
-          <ImpactStat label={copy.day.overnight} value={state.dayCycle.phase==="at_depot"?copy.day.overnight:`${state.bins.filter(b=>b.fillPercent>=80).length} bins ≥80%`}/>
+        <section className="stat-ticker" aria-label="Live operations summary">
+          <TickerCell label={`${copy.day.day} ${state.dayCycle.day} · ${state.dayCycle.phase==="en_route"?copy.day.collecting:state.dayCycle.phase==="servicing"?copy.day.servicing:copy.day.depot}`} value={state.dayCycle.phase==="at_depot"?`${Math.floor(state.dayCycle.nextDepartureInMinutes/60)}h ${state.dayCycle.nextDepartureInMinutes%60}m`:`${state.dayCycle.binsServicedToday} ${copy.day.stopsToday}`}/>
+          <TickerCell label={copy.day.litresToday} value={`${state.dayCycle.litresCollectedToday} L`}/>
+          <TickerCell label={copy.day.totalServiced} value={String(state.dayCycle.binsServicedTotal)}/>
+          <TickerCell label={copy.day.overnight} value={state.dayCycle.phase==="at_depot"?copy.day.overnight:`${state.bins.filter(b=>b.fillPercent>=80).length} bins ≥80%`}/>
+          <TickerCell label={copy.kpis.open} value={String(open)} detail={`${urgent} ${copy.kpis.urgent}`} tone="red"/>
+          <TickerCell label={copy.kpis.demand} value={String(state.signals.filter(s=>s.status!=="collected").length)} detail={copy.kpis.waiting} tone="teal"/>
+          <TickerCell label={copy.kpis.vehicles} value={String(state.vehicles.filter(v=>v.status==="en_route"||v.status==="collecting").length)} detail={copy.kpis.ofTotal}/>
+          <TickerCell label={copy.kpis.bins} value={String(full)} detail={copy.kpis.threshold} tone="amber"/>
         </section>
-        <section className="kpi-grid" aria-label="Live operations summary">
-          <Kpi label={copy.kpis.open} value={open} detail={`${urgent} ${copy.kpis.urgent}`} icon={<AlertTriangle/>} tone="red"/>
-          <Kpi label={copy.kpis.demand} value={state.signals.filter(s=>s.status!=="collected").length} detail={copy.kpis.waiting} icon={<RadioTower/>} tone="teal"/>
-          <Kpi label={copy.kpis.vehicles} value={state.vehicles.filter(v=>v.status==="en_route"||v.status==="collecting").length} detail={copy.kpis.ofTotal} icon={<Truck/>}/>
-          <Kpi label={copy.kpis.bins} value={full} detail={copy.kpis.threshold} icon={<CircleGauge/>} tone="amber"/>
-        </section>
-        <section className="ops-grid">
-          <article className="panel map-panel">
-            <div className="section-heading split-heading"><div><p className="eyebrow">{copy.mapHeading}</p><h1 className="title">{copy.mapTitle}</h1></div><span className="source-chip">{copy.geography}</span></div>
-            <BengaluruMap markers={markers} route={state.route.roadPath} vehiclePaths={state.route.roadPathByVehicle} geometrySource={state.route.roadGeometrySource} tripStatus={tripStatusFor(state)} userLocation={state.userLocation?.location??MOCK_USER_LOCATION} height={530}/>
-          </article>
+        <div className="ops-bench">
           <PriorityQueue ranked={ranked} selectedId={selected?.id} onSelect={id=>{selectReport(id);setTab("priority")}}/>
-        </section>
+          <article className="bench-map">
+            <div className="bench-map-head">
+              <div><p className="eyebrow">{copy.mapHeading}</p><h1 className="title">{copy.mapTitle}</h1></div>
+              <span className="source-chip">{copy.geography}</span>
+            </div>
+            <BengaluruMap markers={markers} route={state.route.roadPath} vehiclePaths={state.route.roadPathByVehicle} geometrySource={state.route.roadGeometrySource} tripStatus={tripStatusFor(state)} userLocation={state.userLocation?.location??MOCK_USER_LOCATION} height={520}/>
+          </article>
+        </div>
       </>}
       {tab==="priority"&&<section className="priority-layout"><PriorityQueue ranked={ranked} selectedId={selected?.id} onSelect={selectReport}/>{selected&&<PriorityAudit result={selected.priority}/>}</section>}
       {tab==="routes"&&<RoutesLab/>}
@@ -85,24 +95,34 @@ export default function BbmpPage(){
  </AtlasShell>;
 }
 
-function Kpi({label,value,detail,icon,tone}:{label:string;value:number;detail:string;icon:React.ReactNode;tone?:"red"|"amber"|"teal"}){return <article className="kpi-card"><span className={tone?`tone-${tone}`:undefined}>{icon}</span><div><p>{label}</p><strong>{value}</strong><small>{detail}</small></div></article>}
-
-function ImpactStat({label,value}:{label:string;value:string}){return <div><span>{label}</span><strong>{value}</strong></div>}
+function TickerCell({label,value,detail,tone}:{label:string;value:string;detail?:string;tone?:"red"|"amber"|"teal"}){
+  return <div className={tone?`ticker-cell tone-${tone}`:"ticker-cell"}>
+    <span>{label}</span>
+    <strong>{value}</strong>
+    {detail&&<small>{detail}</small>}
+  </div>;
+}
 
 function PriorityQueue({ranked,selectedId,onSelect}:{ranked:ReturnType<typeof useDemo>["state"]["reports"];selectedId?:string;onSelect:(id:string)=>void}){
   const {locale}=useDemo();const copy=uiCopy[locale].bbmp;
-  return <aside className="panel queue-panel">
-    <div className="section-heading split-heading"><div><p className="eyebrow">{copy.queueEyebrow}</p><h2 className="title">{copy.queueTitle}</h2></div><ArrowDownUp size={18}/></div>
+  return <aside className="queue-docket">
+    <div className="section-heading split-heading"><div><p className="eyebrow">{copy.queueEyebrow}</p><h2 className="title">{copy.queueTitle}</h2></div><span className="docket-count">{ranked.length}</span></div>
     {ranked.length===0
       ? <EmptyState>{uiCopy[locale].bbmp.queueTitle}: 0 — every report has been citizen-confirmed.</EmptyState>
-      : <div className="queue-list">{ranked.map((report,index)=>(
-          <button key={report.id} className={selectedId===report.id?"queue-row selected":"queue-row"} onClick={()=>onSelect(report.id)}>
-            <span className="queue-rank">{String(index+1).padStart(2,"0")}</span>
-            <div><strong>{report.title}</strong><p>{report.locality} · {report.status}</p><small>{[...report.priority.audit.factors].sort((a,b)=>b.contribution-a.contribution).slice(0,2).map(f=>f.key.replace(/([A-Z])/g," $1").toLowerCase()).join(" + ")}</small></div>
-            <span className={`score-chip band-${report.priority.audit.effectiveBand}`}><b>{report.priority.audit.effectiveScore.toFixed(1)}</b>{report.priority.audit.effectiveBand}</span>
-            <ChevronRight/>
-          </button>
-        ))}</div>}
+      : <ol className="docket-rows">{ranked.map((report,index)=>(
+          <li key={report.id}>
+            <button className={selectedId===report.id?"docket-row selected":"docket-row"} onClick={()=>onSelect(report.id)}>
+              <span className="docket-rank">{String(index+1).padStart(2,"0")}</span>
+              <span className="docket-copy">
+                <strong>{report.title}</strong>
+                <p>{report.locality} · {report.status}</p>
+                <small>{[...report.priority.audit.factors].sort((a,b)=>b.contribution-a.contribution).slice(0,2).map(f=>f.key.replace(/([A-Z])/g," $1").toLowerCase()).join(" + ")}</small>
+                <i className="docket-bar" aria-hidden="true"><b style={{width:`${Math.min(100,report.priority.audit.effectiveScore)}%`}}/></i>
+              </span>
+              <span className={`score-chip band-${report.priority.audit.effectiveBand}`}><b>{report.priority.audit.effectiveScore.toFixed(1)}</b>{report.priority.audit.effectiveBand}</span>
+            </button>
+          </li>
+        ))}</ol>}
   </aside>;
 }
 
@@ -111,18 +131,16 @@ function RoutesLab(){
   const [replayKm,setReplayKm]=useState<number|null>(null);
   const lead=state.route.roadPathByVehicle[0];
   const liveTrip=tripStatusFor(state);
-  // While a replay runs we override the trip projection so the map's
-  // dead-reckoning plays the published round from the depot, stop by stop.
-  const replayTrip=useMemo<TripStatus|null>(()=>{
-    if(replayKm===null||!lead)return null;
-    const dists=lead.stopDistancesKm??[];
-    const stops=state.route.routes[0]?.stops??[];
-    let index=dists.findIndex(distance=>replayKm<distance);
-    if(index<0)index=dists.length-1;
-    const nextDistance=index>=0?dists[index]:null;
+  const replayTrip:TripStatus|null=useMemo(()=>{
+    if(replayKm==null||!lead)return null;
+    const stops=state.route.routes.find(r=>r.vehicleId===lead.vehicleId)?.stops??[];
+    let index=-1,acc=0;
+    for(let i=0;i<stops.length;i++){acc+=stops[i].distanceKm;if(replayKm<=acc){index=i;break}}
+    const nextDistance=index>=0?acc:null;
     return {
-      remainingKm:Math.max(0,lead.distanceKm-replayKm),
-      etaMinutes:Math.round((lead.distanceKm-replayKm)/TRUCK_SPEED_KMH*60),
+      vehicleId:lead.vehicleId,
+      remainingKm:Math.max(0,Math.round(lead.distanceKm-replayKm)),
+      etaMinutes:Math.max(0,Math.round((lead.distanceKm-replayKm)/TRUCK_SPEED_KMH*60)),
       totalKm:Math.round(lead.distanceKm),
       progressKm:replayKm,
       nextStopKm:nextDistance,
@@ -156,7 +174,7 @@ function RoutesLab(){
       <div><p className="eyebrow">multi-signal-aco-inspired-v1</p><h1>Adaptive route revision</h1><p>Five specialist colonies search the same feasible stop set. Active weights adapt to current urgency and every stop preserves its signal trail.</p></div>
       <div>
         <button data-testid="route-reoptimize" className="secondary-button" disabled={busy} onClick={()=>reoptimize("manual_control_room")}>Recalculate</button>
-        <button data-testid="route-publish" className="primary-button" disabled={busy} onClick={publishRoute}><Check size={18}/>Publish revision</button>
+        <button data-testid="route-publish" className="primary-button" disabled={busy} onClick={publishRoute}><Check size={18}/>Publish route</button>
       </div>
     </div>
     <div className="route-metrics">

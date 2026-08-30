@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Building2, Recycle, Route } from "lucide-react";
+import { ArrowLeft, ArrowRight, Building2, Recycle, Route } from "lucide-react";
 import { useAuth, type DemoRole } from "../../src/components/auth";
 import { useDemo } from "../../src/components/demo-provider";
 import { uiCopy } from "../../src/data/copy";
@@ -30,32 +30,48 @@ export default function LoginPage(){
     window.location.href=next&&next.startsWith("/")?next:roleHome[role];
   }
 
-  return <main className="login-shell" lang={locale==="kn"?"kn":"en"}>
-    <div className="login-card">
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-        <span className="brand-mark" aria-hidden="true">BW</span>
-        <div style={{display:"flex",gap:8}}>
+  // Split gate: deep-green editorial stage on the left, sign-in desk on the right.
+  return <main className="gate-page" lang={locale==="kn"?"kn":"en"}>
+    <section className="gate-stage" aria-hidden="true">
+      <p className="gate-kicker">Mahadevapura pilot · wards 28–50</p>
+      <p className="gate-statement">Report a pile. Watch the route change. <em>Confirm the street is clean.</em></p>
+      <div className="gate-meta">
+        <span>Seed 4242</span>
+        <span>Synthetic operations</span>
+        <span>Real Bengaluru geography</span>
+      </div>
+      <span className="gate-kannada" lang="kn">ಸ್ವಚ್ಛ ಬೆಂಗಳೂರು</span>
+    </section>
+    <section className="gate-desk">
+      <header className="gate-top">
+        <Link className="brand" href="/" aria-label="Bengaluru Smart Waste home">
+          <span className="brand-mark" aria-hidden="true">BW</span>
+          <span><strong>Bengaluru Smart Waste</strong><small>Sign in</small></span>
+        </Link>
+        <div className="gate-top-actions">
           <button type="button" className="quiet-button" onClick={()=>setLocale(locale==="en"?"kn":"en")} aria-label="Switch language">{locale==="en"?"ಕನ್ನಡ":"English"}</button>
           <Link className="quiet-button" style={{textDecoration:"none"}} href="/"><ArrowLeft size={16}/>{copy.back}</Link>
         </div>
-      </div>
-      <h1>{copy.title}</h1>
-      <p>{copy.sub}</p>
-      <form onSubmit={submit} noValidate>
-        <label><span>{copy.name}</span><input value={name} onChange={e=>setName(e.target.value)} autoComplete="name" maxLength={60}/></label>
-        <label><span>{copy.phone}</span><input value={phone} onChange={e=>setPhone(e.target.value)} inputMode="numeric" maxLength={12} placeholder="9876543210"/></label>
-        <label><span>{copy.role}</span></label>
-        <div className="login-roles" role="radiogroup" aria-label={copy.role}>
+      </header>
+      <form className="gate-form" onSubmit={submit} noValidate>
+        <div className="gate-heading">
+          <p className="eyebrow">Choose your desk</p>
+          <h1>{copy.title}</h1>
+          <p>{copy.sub}</p>
+        </div>
+        <div className="role-segment" role="radiogroup" aria-label={copy.role}>
           {roleMeta.map(item=>{
             const Icon=item.icon;
             return <button type="button" key={item.id} role="radio" aria-checked={role===item.id} className={role===item.id?"active":""} onClick={()=>setRole(item.id)}>
-              <Icon size={18}/><span>{copy.roles[item.id]}<small lang={locale==="kn"?"en":"kn"}>{locale==="kn"?item.hint.en:item.hint.kn}</small></span>
+              <Icon size={17} aria-hidden="true"/><span>{copy.roles[item.id]}</span>
             </button>;
           })}
         </div>
-        {error&&<p className="danger-text" role="alert" style={{margin:0,fontSize:12}}>{error}</p>}
-        <button type="submit" className="primary-button wide-button">{copy.submit}</button>
+        <label className="gate-field"><span>{copy.name}</span><input value={name} onChange={e=>setName(e.target.value)} autoComplete="name" maxLength={60}/></label>
+        <label className="gate-field"><span>{copy.phone}</span><input value={phone} onChange={e=>setPhone(e.target.value)} inputMode="numeric" maxLength={12} placeholder="9876543210"/></label>
+        {error&&<p className="gate-error danger-text" role="alert">{error}</p>}
+        <button type="submit" className="gate-submit">{copy.submit}<ArrowRight size={18} aria-hidden="true"/></button>
       </form>
-    </div>
+    </section>
   </main>;
 }
