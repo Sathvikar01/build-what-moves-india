@@ -97,7 +97,7 @@ export default function Home() {
           <span>Wards 28–50 · GBA 2025</span>
           <span>{copy.badge}</span>
         </div>
-        <h1 className="mast-headline rise"><HeroHeadline text={copy.hero} /></h1>
+        <h1 className="mast-headline mast-wipe rise"><HeroHeadline text={copy.hero} /></h1>
         <div className="mast-under">
           <p className="mast-deck rise rise-1">{copy.sub}</p>
           <div className="mast-actions rise rise-2">
@@ -133,15 +133,14 @@ export default function Home() {
       {/* The civic loop printed as a numbered ledger with live counts */}
       <section className="ledger" id="loop" aria-label="How the loop works">
         <div className="ledger-head">
-          <p className="eyebrow">{copy.badge}</p>
-          <h2 className="rise">{copy.truth[2][0]}</h2>
+          <h2>{copy.truth[2][0]}</h2>
         </div>
         <ol className="ledger-rows">
           {loopSteps.map((label, index) => (
             <li className={`ledger-row rise rise-${Math.min(index + 1, 5)}`} key={label}>
               <i aria-hidden="true">{String(index + 1).padStart(2, "0")}</i>
               <strong>{label}</strong>
-              <span className="ledger-count" aria-label={`${loopCounts[index]} live`}><b>{loopCounts[index]}</b><small>on the board</small></span>
+              <span className="ledger-count"><b>{loopCounts[index]}</b></span>
             </li>
           ))}
         </ol>

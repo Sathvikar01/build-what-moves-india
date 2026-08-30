@@ -66,7 +66,7 @@ export default function BbmpPage(){
       {tab==="overview"&&<>
         <section className="stat-ticker" aria-label="Live operations summary">
           <TickerCell label={`${copy.day.day} ${state.dayCycle.day} · ${state.dayCycle.phase==="en_route"?copy.day.collecting:state.dayCycle.phase==="servicing"?copy.day.servicing:copy.day.depot}`} value={state.dayCycle.phase==="at_depot"?`${Math.floor(state.dayCycle.nextDepartureInMinutes/60)}h ${state.dayCycle.nextDepartureInMinutes%60}m`:`${state.dayCycle.binsServicedToday} ${copy.day.stopsToday}`}/>
-          <TickerCell label={copy.day.litresToday} value={`${state.dayCycle.litresCollectedToday} L`}/>
+          <TickerCell label={copy.day.litresToday} value={String(state.dayCycle.litresCollectedToday)}/>
           <TickerCell label={copy.day.totalServiced} value={String(state.dayCycle.binsServicedTotal)}/>
           <TickerCell label={copy.day.overnight} value={state.dayCycle.phase==="at_depot"?copy.day.overnight:`${state.bins.filter(b=>b.fillPercent>=80).length} bins ≥80%`}/>
           <TickerCell label={copy.kpis.open} value={String(open)} detail={`${urgent} ${copy.kpis.urgent}`} tone="red"/>
@@ -75,10 +75,13 @@ export default function BbmpPage(){
           <TickerCell label={copy.kpis.bins} value={String(full)} detail={copy.kpis.threshold} tone="amber"/>
         </section>
         <div className="ops-bench">
-          <PriorityQueue ranked={ranked} selectedId={selected?.id} onSelect={id=>{selectReport(id);setTab("priority")}}/>
+          <div className="docket-wrap">
+            <PriorityQueue ranked={ranked.slice(0,3)} selectedId={selected?.id} onSelect={id=>{selectReport(id);setTab("priority")}}/>
+            {ranked.length>3&&<button type="button" className="queue-more" onClick={()=>setTab("priority")}>Full queue · {ranked.length} open →</button>}
+          </div>
           <article className="bench-map">
             <div className="bench-map-head">
-              <div><p className="eyebrow">{copy.mapHeading}</p><h1 className="title">{copy.mapTitle}</h1></div>
+              <h1 className="title">{copy.mapTitle}</h1>
               <span className="source-chip">{copy.geography}</span>
             </div>
             <BengaluruMap markers={markers} route={state.route.roadPath} vehiclePaths={state.route.roadPathByVehicle} geometrySource={state.route.roadGeometrySource} tripStatus={tripStatusFor(state)} userLocation={state.userLocation?.location??MOCK_USER_LOCATION} height={520}/>
@@ -106,7 +109,7 @@ function TickerCell({label,value,detail,tone}:{label:string;value:string;detail?
 function PriorityQueue({ranked,selectedId,onSelect}:{ranked:ReturnType<typeof useDemo>["state"]["reports"];selectedId?:string;onSelect:(id:string)=>void}){
   const {locale}=useDemo();const copy=uiCopy[locale].bbmp;
   return <aside className="queue-docket">
-    <div className="section-heading split-heading"><div><p className="eyebrow">{copy.queueEyebrow}</p><h2 className="title">{copy.queueTitle}</h2></div><span className="docket-count">{ranked.length}</span></div>
+    <div className="section-heading split-heading"><div><h2 className="title">{copy.queueTitle}</h2><p className="queue-sub">{copy.queueEyebrow} · top {ranked.length} by effective score</p></div><span className="docket-count">{ranked.length}</span></div>
     {ranked.length===0
       ? <EmptyState>{uiCopy[locale].bbmp.queueTitle}: 0 — every report has been citizen-confirmed.</EmptyState>
       : <ol className="docket-rows">{ranked.map((report,index)=>(
@@ -185,7 +188,7 @@ function RoutesLab(){
     </div>
     <section className="panel replay-panel">
       <div className="section-heading split-heading">
-        <div><p className="eyebrow">Plan preview</p><h2 className="title">Replay this route</h2><p>Animate the assigned vehicle along the published OSM path to preview the round before the shift starts.</p></div>
+        <div><h2 className="title">Replay this route</h2><p>Animate the assigned vehicle along the published OSM path to preview the round before the shift starts.</p></div>
         <div className="replay-actions">
           {replayTrip
             ? <button type="button" className="secondary-button" onClick={()=>setReplayKm(null)}><RotateCcwSquare size={18}/>Stop replay</button>
@@ -196,13 +199,13 @@ function RoutesLab(){
       {replayTrip&&<div className="replay-progress" role="status"><i style={{transform:`scaleX(${Math.min(1,replayTrip.progressKm/Math.max(1,replayTrip.totalKm))})`}}/><span>{replayTrip.sub}{replayTrip.nextStopLabel?` · next: ${replayTrip.nextStopLabel}`:" · returning to depot"}</span></div>}
     </section>
     <section className="panel">
-      <div className="section-heading"><p className="eyebrow">Adaptive signal weights</p><h2 className="title">What the optimizer is listening to</h2></div>
+      <div className="section-heading"><h2 className="title">What the optimizer is listening to</h2></div>
       <div className="weights-grid">{Object.entries(state.route.weights).map(([key,value])=><div key={key}><span>{key.replace(/([A-Z])/g," $1")}</span><strong>{Math.round(value*100)}%</strong><i><b style={{transform:`scaleX(${value})`}}/></i></div>)}</div>
     </section>
     <div className="route-cards">
       {state.route.routes.filter(route=>route.stops.length>0).map(route=>(
         <section className="panel route-card" key={route.vehicleId}>
-          <div className="section-heading split-heading"><div><p className="eyebrow">Vehicle</p><h2 className="title">{state.vehicles.find(v=>v.id===route.vehicleId)?.label??route.vehicleId}</h2></div><Route size={18}/></div>
+          <div className="section-heading split-heading"><div><h2 className="title">{state.vehicles.find(v=>v.id===route.vehicleId)?.label??route.vehicleId}</h2></div><Route size={18}/></div>
           <ol className="stop-list">{route.stops.map((stop,stopIndex)=>(
             <li key={stop.id}>
               <span className="stop-sequence">{stop.sequence}</span>
@@ -224,7 +227,7 @@ function RoutesLab(){
 function BinsTable(){
   const {state}=useDemo();
   return <section className="panel">
-    <div className="section-heading"><p className="eyebrow">Synthetic IoT telemetry</p><h1 className="title">Smart-bin status</h1></div>
+    <div className="section-heading"><h1 className="title">Smart-bin status</h1></div>
     <div className="table-scroll"><table className="data-table">
       <caption>Ten demo smart bins with deterministic fill telemetry</caption>
       <thead><tr><th>Bin</th><th>Locality</th><th>Fill</th><th>Status</th><th>Streams</th><th>Freshness</th></tr></thead>
@@ -245,7 +248,7 @@ function PlacementLab(){
     <div className="placement-layout">
       <div className="panel"><BengaluruMap markers={markers} height={500}/></div>
       <aside className="panel placement-list">
-        <div className="section-heading"><p className="eyebrow">Six diversified candidates</p><h2 className="title">Recommended public edges</h2></div>
+        <div className="section-heading"><h2 className="title">Recommended public edges</h2></div>
         {state.recommendations.map(r=>(
           <button className={selected===r.id?"placement-row selected":"placement-row"} key={r.id} onClick={()=>setSelected(r.id)}>
             <span>{r.rank}</span><div><strong>{r.label}</strong><small>{r.locality} · {Math.round(r.confidence*100)}% confidence</small></div><b>{r.score.toFixed(1)}</b>
@@ -254,7 +257,7 @@ function PlacementLab(){
       </aside>
     </div>
     {rec&&<section className="panel recommendation-detail">
-      <div className="section-heading split-heading"><div><p className="eyebrow">Recommendation #{rec.rank}</p><h2 className="title">{rec.label}</h2><p>{rec.reasons.join(" · ")}</p></div><div className="score-orb"><strong>{rec.score.toFixed(1)}</strong><span>placement</span></div></div>
+      <div className="section-heading split-heading"><div><h2 className="title">{rec.label}</h2><p className="queue-sub">Candidate #{rec.rank}</p><p>{rec.reasons.join(" · ")}</p></div><div className="score-orb"><strong>{rec.score.toFixed(1)}</strong><span>placement</span></div></div>
       {rec.requiresFieldValidation&&<div className="alert warning"><MapPinned/><div><strong>Field validation required</strong><p>{rec.warnings.join(" ")}</p></div></div>}
       <div className="table-scroll"><table className="data-table">
         <caption>Complete placement score factor breakdown</caption>

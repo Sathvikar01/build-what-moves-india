@@ -43,10 +43,10 @@ export default function CitizenPage(){
   const myReports=useMemo(()=>state.reports.filter(r=>r.id.startsWith("rep-citizen-")||r.id.startsWith("rep-api-")),[state.reports]);
   const awaiting=state.reports.find(r=>r.status==="cleaned");
 
-  const tabs:{id:Step;label:string;note:string}[]=[
-    {id:"signal",label:copy.signalsTitle,note:locale==="en"?"Two taps":"ಎರಡು ಟ್ಯಾಪ್"},
-    {id:"track",label:copy.trackerTitle,note:locale==="en"?"Live status":"ನೇರ ಸ್ಥಿತಿ"},
-    {id:"verify",label:copy.activity,note:locale==="en"?"Close the loop":"ಲೂಪ್ ಮುಕ್ತಾಯ"},
+  const tabs:{id:Step;label:string}[]=[
+    {id:"signal",label:copy.signalsTitle},
+    {id:"track",label:copy.trackerTitle},
+    {id:"verify",label:copy.activity},
   ];
 
   function showNotice(next:Notice){
@@ -117,7 +117,6 @@ export default function CitizenPage(){
             <button key={item.id} role="tab" aria-selected={step===item.id} className={step===item.id?"active":""} onClick={()=>setStep(item.id)}>
               <span className="step-no" aria-hidden="true">{String(index+1).padStart(2,"0")}</span>
               <span className="step-word">{item.label}</span>
-              <small>{item.note}</small>
               {item.id==="verify"&&awaiting&&<span className="dot" aria-hidden="true"/>}
             </button>
           ))}
@@ -126,7 +125,7 @@ export default function CitizenPage(){
         <div key={step} className="desk-panel step-panel" role="tabpanel">
           {step==="signal"&&<>
             <section aria-labelledby="quick-title">
-              <div className="section-heading"><p className="eyebrow">{copy.signalsTitle}</p><h2 className="title" id="quick-title">What is waiting?</h2></div>
+              <div className="section-heading"><h2 className="title" id="quick-title">What is waiting?</h2></div>
               <div className="signal-rows">
                 <button data-testid="signal-have-waste" className="signal-row" disabled={busy||submitting} onClick={()=>sendSignal("have_waste")}>
                   <span className="signal-icon"><Trash2/></span>
@@ -141,7 +140,7 @@ export default function CitizenPage(){
               </div>
             </section>
             <section>
-              <div className="section-heading"><p className="eyebrow">{copy.report}</p><h2 className="title">See something? Show the city.</h2></div>
+              <div className="section-heading"><h2 className="title">See something? Show the city.</h2></div>
               <form className="report-form" onSubmit={submitReport}>
                 <label className="upload-drop"><Camera/><strong>{photo?copy.uploadReady:copy.uploadEmpty}</strong><span>{photo?`${Math.round(photo.size/1024)} KB · ${copy.uploadMeta}`:copy.uploadHint}</span><input required type="file" accept="image/jpeg,image/png,image/webp" onChange={async e=>{const file=e.target.files?.[0];if(file){try{setPhoto(await sanitizeEvidence(file))}catch(error){showNotice({kind:"error",message:error instanceof Error?error.message:copy.errors.imagePrepare})}}}}/></label>
                 <label><span>{copy.title}</span><input name="title" required maxLength={120} placeholder={copy.titlePlaceholder}/></label>
@@ -158,13 +157,13 @@ export default function CitizenPage(){
           {step==="track"&&<>
             <ReportTracker reports={myReports} stepIndexFor={status=>STEP_INDEX[status]??0} reopenedLabel={copy.trackerReopened} currentLabel={copy.stepCurrent} emptyLabel={copy.trackerEmpty} steps={copy.steps}/>
             <section>
-              <div className="section-heading"><p className="eyebrow">Live collection</p><h2 className="title">{copy.truck}</h2></div>
+              <div className="section-heading"><h2 className="title">{copy.truck}</h2></div>
               {nearest
                 ? <div className="truck-card"><span className="truck-avatar"><Truck/></span><div><strong>{nearest.label}</strong><p>Auto-tipper · on the way</p><span><Clock3 size={15}/>{trip?`${trip.totalKm} km trip · ${trip.sub}`:`${etaMinutes??copy.etaWaiting} min`}</span></div><b>{Math.round(nearest.loadLitres/nearest.capacityLitres*100)}% loaded</b></div>
                 : <div className="empty-state" role="status">{copy.noVehicle}</div>}
             </section>
             <section>
-              <div className="section-heading"><p className="eyebrow">Sensor status</p><h2 className="title">{copy.bins}</h2></div>
+              <div className="section-heading"><h2 className="title">{copy.bins}</h2></div>
               {listedBins.length===0&&<div className="empty-state" role="status">{copy.noBins}</div>}
               <div className="bin-list">{listedBins.map(bin=>(
                 <div className="bin-row" key={bin.id}>
@@ -176,7 +175,7 @@ export default function CitizenPage(){
           </>}
           {step==="verify"&&<>
             {awaiting&&<section className="confirmation-panel">
-              <div><p className="eyebrow">Cleanup confirmation</p><h2 className="title">Was {awaiting.locality} cleaned?</h2><p>Collector proof was accepted. Your confirmation closes the public audit loop.</p></div>
+              <div><h2 className="title">Was {awaiting.locality} cleaned?</h2><p>Collector proof was accepted. Your confirmation closes the public audit loop.</p></div>
               <EvidencePair proof={state.proofs.find(p=>p.reportId===awaiting.id&&(p.beforeAssetId||p.afterAssetId))} eyebrow={copy.evidenceEyebrow} beforeLabel={copy.evidenceBefore} afterLabel={copy.evidenceAfter} note={copy.evidenceNote}/>
               <div className="confirmation-actions">
                 <button data-testid="confirm-cleaned" className="primary-button" disabled={busy} onClick={()=>confirmCleanup("cleaned")}>{copy.cleaned}</button>
@@ -185,7 +184,7 @@ export default function CitizenPage(){
               </div>
             </section>}
             <section>
-              <div className="section-heading"><p className="eyebrow">Transparent updates</p><h2 className="title">{copy.activity}</h2></div>
+              <div className="section-heading"><h2 className="title">{copy.activity}</h2></div>
               {state.events.length===0&&<div className="empty-state" role="status">{copy.noEvents}</div>}
               <ol className="timeline">{state.events.slice(-6).reverse().map(event=>(<li key={event.id}><span/><div><strong>{event.message}</strong><small>{new Date(event.occurredAt).toLocaleString(copy.localeTag)} · audit cursor {event.cursor}</small></div></li>))}</ol>
             </section>

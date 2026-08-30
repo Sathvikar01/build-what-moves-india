@@ -101,7 +101,8 @@ export default function CollectorPage(){
           {next&&<section className="panel next-stop-card">
             <div className="next-card-head">
               <span className="next-number" aria-hidden="true">{next.sequence}</span>
-              <div className="section-heading"><p className="eyebrow">{copy.stop} · {copy.eta} {etaMinutes} {copy.minutes}</p><h2 className="title">{next.label}</h2></div>
+              <div className="section-heading"><h2 className="title">{next.label}</h2></div>
+              <em className="next-eta">{etaMinutes} {copy.minutes}</em>
             </div>
             <div className="stop-facts"><span><MapPin/> {next.locality}</span><span><PackageCheck/> {next.volumeLitres.toFixed(0)} {copy.expected}</span><span><Navigation/> {kmLeft} {copy.estimated}</span></div>
             <div className="why-box"><strong>{copy.why}</strong><p>{next.explanation}</p><div className="contribution-row">{next.contributions.map(c=><span key={c.signal}><b>{c.contribution}</b>{c.label}</span>)}</div></div>
@@ -113,7 +114,7 @@ export default function CollectorPage(){
           </section>}
           {proofOpen&&next&&<section className="panel proof-panel">
             <div>
-              <p className="eyebrow">{copy.proofEyebrow}</p><h2 className="title">{copy.proofTitle}</h2>
+              <h2 className="title">{copy.proofTitle}</h2>
               <p className="muted">Before/after evidence is re-encoded in the browser and persisted privately. Recorded coordinates and every checklist item are required before the report can become cleaned.</p>
               {proofStatus==="error"&&<p className="danger-text" role="alert">Proof could not be stored. Evidence remains on this device; retry to continue.</p>}
             </div>
@@ -128,9 +129,9 @@ export default function CollectorPage(){
             </div>
           </section>}
           <section className="panel manifest-panel">
-            <div className="section-heading"><p className="eyebrow">{copy.stopsEyebrow}</p><h2 className="title">{copy.stopsTitle}</h2></div>
+            <div className="section-heading"><h2 className="title">{copy.stopsTitle}</h2></div>
             <ol className="stop-list">{route?.stops.map(stop=>(
-              <li key={stop.id}><span className="stop-sequence">{stop.sequence}</span><div className="stop-main"><strong>{stop.label}</strong><small>{stop.locality} · {stop.etaMinutes} {copy.minutes}</small><span className={`status-chip status-${stop.status}`}>{stop.status.replaceAll("_"," ")}</span></div></li>
+              <li key={stop.id} className={next&&stop.id===next.id?"stop-now":""}><span className="stop-sequence">{stop.sequence}</span><div className="stop-main"><strong>{stop.label}</strong><small>{stop.locality} · {stop.etaMinutes} {copy.minutes}</small><span className={`status-chip status-${stop.status}`}>{stop.status.replaceAll("_"," ")}</span>{next&&stop.id===next.id&&<em className="stop-now-tag" aria-label="current stop">NOW</em>}</div></li>
             ))}</ol>
           </section>
         </aside>

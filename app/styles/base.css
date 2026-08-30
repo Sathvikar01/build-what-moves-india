@@ -83,18 +83,19 @@ h1, h2, h3 {
   letter-spacing: -0.01em;
 }
 
-/* Eyebrows are mono telemetry labels in work-order brackets — the signature. */
+/* Metadata lines are mono telemetry, never kickers — they carry real facts
+   (zone, shift, algorithm id) and sit only where those facts matter. */
 .eyebrow {
   margin: 0 0 var(--space-2);
-  color: var(--accent);
+  color: var(--ink-lo);
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 600;
-  letter-spacing: 0.09em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
-.eyebrow::before { content: "[ "; color: var(--ink-lo); }
-.eyebrow::after { content: " ]"; color: var(--ink-lo); }
+
+input, textarea, select { caret-color: var(--accent); }
 
 .muted { color: var(--ink-mid); }
 .danger-text { color: var(--red); }
