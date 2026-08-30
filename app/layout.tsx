@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { Fraunces, Noto_Sans_Kannada, Public_Sans } from "next/font/google";
+import { Archivo, JetBrains_Mono, Noto_Sans_Kannada } from "next/font/google";
 import "leaflet/dist/leaflet.css";
 import "./globals.css";
 import { DemoProvider } from "../src/components/demo-provider";
 import { AuthProvider } from "../src/components/auth";
 
-const publicSans = Public_Sans({ variable: "--font-public-sans", subsets: ["latin"] });
+const archivo = Archivo({ variable: "--font-archivo", subsets: ["latin"] });
+const jetbrainsMono = JetBrains_Mono({ variable: "--font-jbmono", subsets: ["latin"] });
 const notoKannada = Noto_Sans_Kannada({ variable: "--font-noto-kannada", subsets: ["kannada"] });
-const fraunces = Fraunces({ variable: "--font-fraunces", subsets: ["latin"], axes: ["opsz"] });
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
@@ -19,5 +19,5 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en"><body className={`${publicSans.variable} ${notoKannada.variable} ${fraunces.variable}`}><AuthProvider><DemoProvider>{children}</DemoProvider></AuthProvider></body></html>;
+  return <html lang="en"><body className={`${archivo.variable} ${jetbrainsMono.variable} ${notoKannada.variable}`}><AuthProvider><DemoProvider>{children}</DemoProvider></AuthProvider></body></html>;
 }

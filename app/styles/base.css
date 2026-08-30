@@ -1,6 +1,8 @@
 /* ============================================================================
-   CIVIC FIELD GUIDE — base
-   Reset, editorial typographic scale, accessibility primitives, leaflet base.
+   MUNICIPAL WORKS — base
+   Reset, industrial typographic scale, accessibility primitives, leaflet base.
+   Macro type: heavy grotesque, uppercase, compressed.
+   Micro type: monospace telemetry labels, uppercase, tracked wide.
    ========================================================================== */
 
 *,
@@ -17,18 +19,15 @@ body {
   margin: 0;
   /* next/font injects its variables on <body>, so composite stacks must be
      defined here — :root cannot see them. */
-  --font-display: var(--font-fraunces), Georgia, "Times New Roman", serif;
-  --font-body: var(--font-public-sans), var(--font-noto-sans), system-ui, sans-serif;
-  --font-kn: var(--font-noto-kannada), var(--font-public-sans), sans-serif;
-  /* Faint paper grain + one soft green wash — texture without noise. */
-  background:
-    radial-gradient(1100px 460px at 82% -12%, rgba(47, 107, 79, 0.06), transparent 64%),
-    radial-gradient(900px 520px at -6% 104%, rgba(164, 101, 15, 0.045), transparent 60%),
-    var(--paper);
+  --font-display: var(--font-archivo), "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-body: var(--font-archivo), var(--font-noto-kannada), system-ui, sans-serif;
+  --font-mono: var(--font-jbmono), ui-monospace, "Cascadia Mono", "Courier New", monospace;
+  --font-kn: var(--font-noto-kannada), var(--font-archivo), sans-serif;
+  background: var(--paper);
   color: var(--ink);
   font-family: var(--font-body);
   font-size: 15px;
-  line-height: 1.6;
+  line-height: 1.55;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
@@ -40,12 +39,11 @@ img { max-width: 100%; display: block; }
 ::selection { color: var(--on-accent); background: var(--accent); }
 
 :focus-visible {
-  outline: 3px solid var(--focus);
-  outline-offset: 3px;
-  border-radius: 4px;
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
 }
 
-/* ── Editorial typographic scale ──────────────────────────────────────────── */
+/* ── Industrial typographic scale ─────────────────────────────────────────── */
 
 h1, h2, h3 {
   font-family: var(--font-display);
@@ -55,43 +53,48 @@ h1, h2, h3 {
 }
 
 .display-1 {
-  font-size: clamp(2.7rem, 6vw, 4.8rem);
-  font-weight: 560;
-  line-height: 1.04;
-  letter-spacing: -0.022em;
+  font-size: clamp(2.6rem, 7vw, 5.6rem);
+  font-weight: 900;
+  line-height: 0.94;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
 }
 
 .display-2 {
-  font-size: clamp(1.9rem, 3.6vw, 2.9rem);
-  font-weight: 560;
-  line-height: 1.08;
-  letter-spacing: -0.018em;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-weight: 900;
+  line-height: 0.96;
+  letter-spacing: -0.025em;
+  text-transform: uppercase;
 }
 
 .title {
   font-family: var(--font-display);
-  font-size: clamp(1.18rem, 2vw, 1.5rem);
-  font-weight: 600;
-  line-height: 1.2;
-  letter-spacing: -0.01em;
+  font-size: clamp(1.12rem, 2vw, 1.42rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  text-transform: uppercase;
 }
 
 .numeral {
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
 }
 
-/* Eyebrows are italic serif labels — the signature editorial move. */
+/* Eyebrows are mono telemetry labels in work-order brackets — the signature. */
 .eyebrow {
   margin: 0 0 var(--space-2);
   color: var(--accent);
-  font-family: var(--font-display);
-  font-style: italic;
-  font-size: 0.95rem;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  text-transform: none;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
 }
+.eyebrow::before { content: "[ "; color: var(--ink-lo); }
+.eyebrow::after { content: " ]"; color: var(--ink-lo); }
 
 .muted { color: var(--ink-mid); }
 .danger-text { color: var(--red); }
@@ -113,21 +116,23 @@ h1, h2, h3 {
   left: 10px;
   z-index: 2000;
   padding: 10px 16px;
-  border-radius: var(--r-sm);
-  background: var(--accent);
-  color: var(--on-accent);
-  font-weight: 700;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   text-decoration: none;
   transform: translateY(-260%);
   transition: transform var(--t-fast) var(--ease-out);
 }
 .skip-link:focus-visible { transform: translateY(0); }
 
-/* ── Scrollbars (paper chrome) ────────────────────────────────────────────── */
+/* ── Scrollbars (machine chrome) ──────────────────────────────────────────── */
 
 * { scrollbar-width: thin; scrollbar-color: var(--edge) transparent; }
 *::-webkit-scrollbar { width: 9px; height: 9px; }
-*::-webkit-scrollbar-thumb { background: var(--edge); border-radius: 99px; border: 2px solid transparent; background-clip: content-box; }
+*::-webkit-scrollbar-thumb { background: var(--edge); border: 2px solid transparent; background-clip: content-box; }
 *::-webkit-scrollbar-track { background: transparent; }
 
 /* ── Reduced motion: gentler, not zero ────────────────────────────────────── */

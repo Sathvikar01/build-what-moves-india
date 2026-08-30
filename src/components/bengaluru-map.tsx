@@ -28,7 +28,7 @@ export { MOCK_USER_LOCATION };
 type MapStatus = "loading" | "ready" | "error";
 type RoutePath = { points: GeoPoint[]; totalKm: number; stops: number[] };
 
-const TRUCK_SVG = `<div class="truck-marker"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M12 2.5 19.5 21 12 16.6 4.5 21Z" fill="#fffdf7" stroke="#2f6b4f" stroke-width="1.4" stroke-linejoin="round"/></svg></div>`;
+const TRUCK_SVG = `<div class="truck-marker"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M12 2.5 19.5 21 12 16.6 4.5 21Z" fill="#f2f1ec" stroke="#12120f" stroke-width="1.4" stroke-linejoin="round"/></svg></div>`;
 
 type VehicleEntry = { marker: Marker; bearing: number; lastLocation: GeoPoint | null };
 
@@ -154,12 +154,12 @@ export function BengaluruMap({ markers, route = [], vehiclePaths, geometrySource
         // One continuous green traversal line anchored at the truck: everything
         // from its current position through the remaining stops back to base.
         draw(slicePath(leadPath.points, 0, progress, roadFactor), "#8a9a90", 4, 0.5);            // traveled (dimmed)
-        draw(slicePath(leadPath.points, progress, total, roadFactor), "#fffdf7", 9, 0.9);        // casing
-        draw(slicePath(leadPath.points, progress, total, roadFactor), "#2f6b4f", 5.5, 0.95);     // route from vehicle
-        draw(slicePath(leadPath.points, progress, Math.min(tripStatus.nextStopKm ?? total, total), roadFactor), "#3d8261", 7, 1); // leg to next stop
+        draw(slicePath(leadPath.points, progress, total, roadFactor), "#f2f1ec", 9, 0.9);        // casing
+        draw(slicePath(leadPath.points, progress, total, roadFactor), "#12120f", 5.5, 0.95);     // route from vehicle
+        draw(slicePath(leadPath.points, progress, Math.min(tripStatus.nextStopKm ?? total, total), roadFactor), "#c41a16", 7, 1); // leg to next stop
       } else {
-        draw(leadPath.points, "#fffdf7", 9, 0.9);
-        draw(leadPath.points, "#2f6b4f", 5.5, 0.95);
+        draw(leadPath.points, "#f2f1ec", 9, 0.9);
+        draw(leadPath.points, "#12120f", 5.5, 0.95);
       }
     }
 
@@ -170,10 +170,10 @@ export function BengaluruMap({ markers, route = [], vehiclePaths, geometrySource
     if (nextPoint && tripStatus && tripStatus.nextStopIndex !== null) {
       const ring = L.circleMarker([nextPoint.lat, nextPoint.lng], {
         radius: 14,
-        color: "#2f6b4f",
+        color: "#12120f",
         weight: 3,
         opacity: 0.9,
-        fillColor: "#2f6b4f",
+        fillColor: "#12120f",
         fillOpacity: 0.15,
         className: "next-stop-ring",
       }).addTo(map);
@@ -181,7 +181,7 @@ export function BengaluruMap({ markers, route = [], vehiclePaths, geometrySource
     }
 
     // These mirror the :root tokens in app/styles/tokens.css (--accent, --amber, --red, --blue, --violet, --teal).
-    const colors = { vehicle: "#2f6b4f", bin: "#a4650f", report: "#b23a2e", signal: "#0e7a6d", recommendation: "#6b4fb8", user: "#2b6cb0", pickup: "#0e7a6d" } as const;
+    const colors = { vehicle: "#c41a16", bin: "#9a6a00", report: "#12120f", signal: "#0d6e62", recommendation: "#584a8f", user: "#24549c", pickup: "#0d6e62" } as const;
 
     const statics = staticMarkersRef.current;
     const vehicles = vehiclesRef.current;
@@ -223,7 +223,7 @@ export function BengaluruMap({ markers, route = [], vehiclePaths, geometrySource
       }
       statics.set(marker.id, L.circleMarker([marker.location.lat, marker.location.lng], {
         radius: marker.kind === "recommendation" ? 7 : 6,
-        color: "#fffdf7",
+        color: "#f2f1ec",
         weight: 3,
         fillColor: overflow ? "#b23a2e" : colors[marker.kind],
         fillOpacity: 1,
