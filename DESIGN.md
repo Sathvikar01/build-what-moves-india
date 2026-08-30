@@ -1,33 +1,40 @@
 ---
-name: Bengaluru Smart Waste Management
+name: Bengaluru Smart Waste
 description: Explainable civic waste coordination from citizen signal to verified cleanup.
 colors:
-  ink-950: "#070e0a"
-  ink-900: "#0b1510"
-  ink-850: "#0f1b15"
-  ink-800: "#14231b"
-  ink-700: "#1e3327"
-  line: "rgba(213,236,221,0.09)"
-  text-hi: "#eaf3eb"
-  text-mid: "#a2b8aa"
-  text-lo: "#6b8074"
-  lime: "#c9f24d"
-  lime-bright: "#e0ff70"
-  lime-soft: "rgba(201,242,77,0.12)"
-  amber: "#f0a83c"
-  red: "#f26d5f"
-  teal: "#45d9c3"
-  violet: "#b795ff"
-  blue: "#74b9ff"
-  focus: "#8ecbff"
-  lime-deep: "#86c33a"
-  shadow-ink: "rgba(2,6,4,0.45)"
+  paper: "#f5f2ea"
+  paper-2: "#ede8db"
+  card: "#fffdf7"
+  card-2: "#faf7ee"
+  card-3: "#f2eee2"
+  well: "#e8e3d4"
+  edge: "#cfc8b2"
+  line: "rgba(29,42,34,0.12)"
+  line-strong: "rgba(29,42,34,0.22)"
+  line-accent: "rgba(47,107,79,0.35)"
+  ink: "#1d2a22"
+  ink-mid: "#4f6055"
+  ink-lo: "#75837a"
+  on-accent: "#f7f4ec"
+  accent: "#2f6b4f"
+  accent-bright: "#3d8261"
+  accent-deep: "#235239"
+  accent-soft: "rgba(47,107,79,0.10)"
+  accent-edge: "rgba(47,107,79,0.38)"
+  amber: "#a4650f"
+  red: "#b23a2e"
+  teal: "#0e7a6d"
+  violet: "#6b4fb8"
+  blue: "#2b6cb0"
+  focus: "#2b6cb0"
+  shadow-ink: "rgba(46,58,48,0.10)"
 typography:
-  display: { fontFamily: "Space Grotesk (var(--font-display))", fontSize: "clamp(2.4rem, 5vw, 4rem)", fontWeight: 700, lineHeight: 1.02, letterSpacing: "-.03em" }
-  headline: { fontFamily: "Space Grotesk (var(--font-display))", fontSize: "clamp(1.5rem, 3vw, 2.1rem)", fontWeight: 700, lineHeight: 1.08, letterSpacing: "-.025em" }
-  body: { fontFamily: "Noto Sans (var(--font-body))", fontSize: "15px", lineHeight: 1.55 }
+  display: { fontFamily: "Fraunces (var(--font-fraunces))", fontSize: "clamp(2.7rem, 6vw, 4.8rem)", fontWeight: 560, lineHeight: 1.04, letterSpacing: "-.022em" }
+  headline: { fontFamily: "Fraunces (var(--font-fraunces))", fontSize: "clamp(1.9rem, 3.6vw, 2.9rem)", fontWeight: 560, lineHeight: 1.08, letterSpacing: "-.018em" }
+  body: { fontFamily: "Public Sans (var(--font-public-sans))", fontSize: "15px", lineHeight: 1.6 }
   kannada: { fontFamily: "Noto Sans Kannada (var(--font-kn))" }
-rounded: { small: "8px", md: "12px", lg: "16px", xl: "22px", pill: "999px" }
+  eyebrow: { fontFamily: "Fraunces italic", color: "var(--accent)", fontSize: "0.95rem", transform: "none (sentence case)" }
+rounded: { small: "6px", md: "10px", lg: "14px", xl: "20px", pill: "999px" }
 spacing: { unit: "4px scale (--space-1..8)", page-inline: "clamp(16px, 4vw, 56px)" }
 motion:
   ease-out: "cubic-bezier(0.23, 1, 0.32, 1)"
@@ -36,39 +43,38 @@ motion:
   durations: "140ms press · 200ms small · 280ms drawers"
 ---
 
-# Design System: Command Atlas
+# Design System: Civic Field Guide
 
 ## Overview
 
-Creative north star: **"Command Atlas."** A map-first operations surface — forest-ink chrome, one signal-lime accent reserved for "live / act now," and floating translucent materials over a dark CARTO basemap. Every decision explains itself in a why-drawer; every number on screen comes from seed 4242 and says so.
+Creative north star: **"Civic Field Guide."** A light, warm, editorial civic surface — paper grounds, ink text, hairline rules, one deep civic-green accent reserved for "live / act now," serif display type (Fraunces) over Public Sans UI text, over a light CARTO Positron basemap. It reads like a well-set public document, not a command center. Every decision still explains itself in a why-drawer; every number on screen still comes from seed 4242 and says so.
 
-The incumbent "Namma Civic Atlas" (paper/cream, civic green) was replaced wholesale. Its look is the anti-reference; its product invariants carry forward unchanged.
+The previous "Command Atlas" (forest-ink chrome, signal lime) was replaced wholesale; the current look is its inverse. Product invariants carry forward unchanged.
 
 ## Structure
 
-- **Split shell** (`AtlasShell` + `.atlas-split`): a persistent live map canvas plus a contextual glass rail. Desktop: map fills the viewport, rail docks right (360–430px). Mobile (≤960px): map collapses to a 40–44dvh hero layer, rail stacks below.
-- **Floating chrome**: the app header and route-status chip are translucent material layers (`backdrop-filter: blur(20px) saturate(160%)`) with a bright top edge. Content scrolls underneath.
+- **Split shell** (`AtlasShell` + `.atlas-split`): a persistent live map canvas plus a contextual paper rail. Desktop: map fills the viewport, rail docks right (360–430px). Mobile (≤1100px): map collapses to a ~46dvh layer, rail stacks below.
+- **Paper chrome**: the app header is translucent warm paper (`backdrop-filter: blur(18px) saturate(130%)`) over a hairline rule. Cards are near-white paper (`--card`) with 1px hairline borders and tinted warm shadows — no glass-dark materials.
 - **Why-drawer**: the explainability pattern. Desktop = right slide-over; mobile = bottom sheet. Enter and exit share one path (spatial consistency); exits animate before unmount.
 
 ## Color rules
 
-- **Signal lime is sacred**: primary actions, live indicators, focus of attention, route traversal. Never decorative.
-- Semantic states: amber (fill/warning), red (overflow/blocked), teal (signals/pickups), violet (placement recommendations), blue (user location, neutral info), `--focus` blue for focus rings (never lime — focus ≠ action).
-- Score bands: routine (neutral) → scheduled (blue) → high (amber) → urgent (red) → critical (red + glow).
+- **Civic green is sacred** (`--accent`): primary actions, live indicators, route traversal, selected states. Never decorative.
+- Semantic states: amber (fill/warning), red (overflow/blocked), teal (signals/pickups), violet (placement recommendations), blue (user location, neutral info), `--focus` blue for focus rings (never green — focus ≠ action).
+- Score bands: routine (neutral) → high (blue) → urgent (amber) → critical (red).
 - Honesty: synthetic-data labels stay visible on every surface; source chips name geography.
 
 ## Type rules
 
-- Space Grotesk for display + all numerals (`tabular-nums`); Noto Sans body; Noto Sans Kannada for KN locale. Tracking is size-specific: negative on display, ~0 on body.
-- Hierarchy from weight + size + leading as a set; uppercase eyebrows at 0.72rem/0.09em tracking carry section labels.
+- Fraunces (serif) for display, headlines, big numerals with `tabular-nums` for data; Public Sans body; Noto Sans Kannada for KN locale. Tracking: slightly negative on display, ~0 on body.
+- Eyebrows are italic serif in civic green, sentence case — the signature editorial label. Never all-caps.
 
 ## Motion rules (enforced)
 
-- Press feedback on every pressable: `scale(0.97)` at 140ms ease-out, on pointer-down timelines.
-- Entries start from `scale(0.95)/translateY(8px) + opacity: 0` via `@starting-style` — never from `scale(0)`, never `transition: all`.
-- UI transitions ≤ 300ms; transform/opacity only; CSS transitions (interruptible), keyframes only for loops (pulse/shimmer/ping).
-- List entries stagger 30–80ms where they appear in groups. Hover transforms gated behind `@media (hover:hover)`.
-- `prefers-reduced-motion`: cross-fades replace slides/pulses; `prefers-reduced-transparency`: glass goes near-solid.
+- Press feedback on every pressable: `scale(0.97)` at 140ms ease-out.
+- Staggered entries: `.rise` cascade, translateY(14px) + opacity, 60–380ms delays.
+- UI transitions ≤ 300ms; transform/opacity only; CSS transitions (interruptible), keyframes only for loops (pulse/shimmer/glow-drift).
+- Hover lifts gated behind pointer capability; `prefers-reduced-motion`: animations collapse to near-zero; `prefers-reduced-transparency`: glass goes near-solid.
 
 ## Invariants (product law — never break)
 

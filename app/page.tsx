@@ -37,7 +37,7 @@ const landingRoadRoute = routeOnRoads([
 ]);
 
 const roleMeta = [
-  { href: "/citizen", key: "citizen" as const, icon: Recycle, accent: "var(--lime)" },
+  { href: "/citizen", key: "citizen" as const, icon: Recycle, accent: "var(--accent)" },
   { href: "/bbmp", key: "bbmp" as const, icon: Building2, accent: "var(--blue)" },
   { href: "/collector", key: "collector" as const, icon: Route, accent: "var(--teal)" },
 ];

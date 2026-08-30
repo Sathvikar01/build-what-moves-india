@@ -1,6 +1,6 @@
 /* ============================================================================
-   COMMAND ATLAS — base
-   Reset, typographic scale, accessibility primitives, leaflet surface.
+   CIVIC FIELD GUIDE — base
+   Reset, editorial typographic scale, accessibility primitives, leaflet base.
    ========================================================================== */
 
 *,
@@ -8,8 +8,8 @@
 *::after { box-sizing: border-box; }
 
 html {
-  background: var(--ink-950);
-  color-scheme: dark;
+  background: var(--paper);
+  color-scheme: light;
   scroll-behavior: smooth;
 }
 
@@ -17,17 +17,18 @@ body {
   margin: 0;
   /* next/font injects its variables on <body>, so composite stacks must be
      defined here — :root cannot see them. */
-  --font-display: var(--font-space-grotesk), var(--font-noto-sans), sans-serif;
-  --font-body: var(--font-noto-sans), sans-serif;
-  --font-kn: var(--font-noto-kannada), var(--font-noto-sans), sans-serif;
+  --font-display: var(--font-fraunces), Georgia, "Times New Roman", serif;
+  --font-body: var(--font-public-sans), var(--font-noto-sans), system-ui, sans-serif;
+  --font-kn: var(--font-noto-kannada), var(--font-public-sans), sans-serif;
+  /* Faint paper grain + one soft green wash — texture without noise. */
   background:
-    radial-gradient(1200px 480px at 70% -10%, rgba(201, 242, 77, 0.055), transparent 62%),
-    radial-gradient(900px 500px at 8% 108%, rgba(69, 217, 195, 0.045), transparent 60%),
-    var(--ink-950);
-  color: var(--text-hi);
+    radial-gradient(1100px 460px at 82% -12%, rgba(47, 107, 79, 0.06), transparent 64%),
+    radial-gradient(900px 520px at -6% 104%, rgba(164, 101, 15, 0.045), transparent 60%),
+    var(--paper);
+  color: var(--ink);
   font-family: var(--font-body);
   font-size: 15px;
-  line-height: 1.55;
+  line-height: 1.6;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
@@ -36,7 +37,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
 a { color: inherit; }
 img { max-width: 100%; display: block; }
 
-::selection { color: var(--text-on-accent); background: var(--lime); }
+::selection { color: var(--on-accent); background: var(--accent); }
 
 :focus-visible {
   outline: 3px solid var(--focus);
@@ -44,51 +45,55 @@ img { max-width: 100%; display: block; }
   border-radius: 4px;
 }
 
-/* ── Typographic scale ────────────────────────────────────────────────────── */
+/* ── Editorial typographic scale ──────────────────────────────────────────── */
 
 h1, h2, h3 {
   font-family: var(--font-display);
-  color: var(--text-hi);
+  color: var(--ink);
   margin: 0;
+  text-wrap: balance;
 }
 
 .display-1 {
-  font-size: clamp(2.6rem, 6vw, 4.6rem);
-  font-weight: 700;
-  line-height: 1.02;
-  letter-spacing: -0.03em;
+  font-size: clamp(2.7rem, 6vw, 4.8rem);
+  font-weight: 560;
+  line-height: 1.04;
+  letter-spacing: -0.022em;
 }
 
 .display-2 {
-  font-size: clamp(1.9rem, 3.6vw, 2.8rem);
-  font-weight: 700;
-  line-height: 1.06;
-  letter-spacing: -0.025em;
+  font-size: clamp(1.9rem, 3.6vw, 2.9rem);
+  font-weight: 560;
+  line-height: 1.08;
+  letter-spacing: -0.018em;
 }
 
 .title {
-  font-size: clamp(1.15rem, 2vw, 1.45rem);
-  font-weight: 650;
-  line-height: 1.18;
-  letter-spacing: -0.015em;
+  font-family: var(--font-display);
+  font-size: clamp(1.18rem, 2vw, 1.5rem);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
 }
 
 .numeral {
-  font-family: var(--font-display);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
 }
 
+/* Eyebrows are italic serif labels — the signature editorial move. */
 .eyebrow {
   margin: 0 0 var(--space-2);
-  color: var(--text-lo);
-  font-size: 0.66rem;
-  font-weight: 650;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  text-transform: none;
 }
 
-.muted { color: var(--text-mid); }
+.muted { color: var(--ink-mid); }
 .danger-text { color: var(--red); }
 .sr-only {
   position: absolute;
@@ -109,8 +114,8 @@ h1, h2, h3 {
   z-index: 2000;
   padding: 10px 16px;
   border-radius: var(--r-sm);
-  background: var(--lime);
-  color: var(--text-on-accent);
+  background: var(--accent);
+  color: var(--on-accent);
   font-weight: 700;
   text-decoration: none;
   transform: translateY(-260%);
@@ -118,11 +123,11 @@ h1, h2, h3 {
 }
 .skip-link:focus-visible { transform: translateY(0); }
 
-/* ── Scrollbars (dark chrome) ─────────────────────────────────────────────── */
+/* ── Scrollbars (paper chrome) ────────────────────────────────────────────── */
 
-* { scrollbar-width: thin; scrollbar-color: var(--ink-600) transparent; }
+* { scrollbar-width: thin; scrollbar-color: var(--edge) transparent; }
 *::-webkit-scrollbar { width: 9px; height: 9px; }
-*::-webkit-scrollbar-thumb { background: var(--ink-600); border-radius: 99px; border: 2px solid transparent; background-clip: content-box; }
+*::-webkit-scrollbar-thumb { background: var(--edge); border-radius: 99px; border: 2px solid transparent; background-clip: content-box; }
 *::-webkit-scrollbar-track { background: transparent; }
 
 /* ── Reduced motion: gentler, not zero ────────────────────────────────────── */

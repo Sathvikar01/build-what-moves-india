@@ -28,7 +28,7 @@ export { MOCK_USER_LOCATION };
 type MapStatus = "loading" | "ready" | "error";
 type RoutePath = { points: GeoPoint[]; totalKm: number; stops: number[] };
 
-const TRUCK_SVG = `<div class="truck-marker"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M12 2.5 19.5 21 12 16.6 4.5 21Z" fill="#c9f24d" stroke="#0b1510" stroke-width="1.4" stroke-linejoin="round"/></svg></div>`;
+const TRUCK_SVG = `<div class="truck-marker"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M12 2.5 19.5 21 12 16.6 4.5 21Z" fill="#fffdf7" stroke="#2f6b4f" stroke-width="1.4" stroke-linejoin="round"/></svg></div>`;
 
 type VehicleEntry = { marker: Marker; bearing: number; lastLocation: GeoPoint | null };
 
@@ -151,15 +151,15 @@ export function BengaluruMap({ markers, route = [], vehiclePaths, geometrySource
       if (tripStatus) {
         const total = leadPath.totalKm;
         const progress = Math.min(tripStatus.progressKm, total);
-        // One continuous lime traversal line anchored at the truck: everything
+        // One continuous green traversal line anchored at the truck: everything
         // from its current position through the remaining stops back to base.
-        draw(slicePath(leadPath.points, 0, progress, roadFactor), "#5a6f63", 4, 0.5);             // traveled (dimmed)
-        draw(slicePath(leadPath.points, progress, total, roadFactor), "#fff", 9, 0.85);           // casing
-        draw(slicePath(leadPath.points, progress, total, roadFactor), "#c9f24d", 5.5, 0.95);      // route from vehicle
-        draw(slicePath(leadPath.points, progress, Math.min(tripStatus.nextStopKm ?? total, total), roadFactor), "#e0ff70", 7, 1); // leg to next stop
+        draw(slicePath(leadPath.points, 0, progress, roadFactor), "#8a9a90", 4, 0.5);            // traveled (dimmed)
+        draw(slicePath(leadPath.points, progress, total, roadFactor), "#fffdf7", 9, 0.9);        // casing
+        draw(slicePath(leadPath.points, progress, total, roadFactor), "#2f6b4f", 5.5, 0.95);     // route from vehicle
+        draw(slicePath(leadPath.points, progress, Math.min(tripStatus.nextStopKm ?? total, total), roadFactor), "#3d8261", 7, 1); // leg to next stop
       } else {
-        draw(leadPath.points, "#fff", 9, 0.85);
-        draw(leadPath.points, "#c9f24d", 5.5, 0.95);
+        draw(leadPath.points, "#fffdf7", 9, 0.9);
+        draw(leadPath.points, "#2f6b4f", 5.5, 0.95);
       }
     }
 
@@ -170,18 +170,18 @@ export function BengaluruMap({ markers, route = [], vehiclePaths, geometrySource
     if (nextPoint && tripStatus && tripStatus.nextStopIndex !== null) {
       const ring = L.circleMarker([nextPoint.lat, nextPoint.lng], {
         radius: 14,
-        color: "#c9f24d",
+        color: "#2f6b4f",
         weight: 3,
         opacity: 0.9,
-        fillColor: "#c9f24d",
+        fillColor: "#2f6b4f",
         fillOpacity: 0.15,
         className: "next-stop-ring",
       }).addTo(map);
       routeLayerRef.current.push(ring);
     }
 
-    // These mirror the :root tokens in app/styles/tokens.css (--lime, --amber, --red, --blue, --violet, --teal).
-    const colors = { vehicle: "#c9f24d", bin: "#f0a83c", report: "#f26d5f", signal: "#45d9c3", recommendation: "#b795ff", user: "#74b9ff", pickup: "#45d9c3" } as const;
+    // These mirror the :root tokens in app/styles/tokens.css (--accent, --amber, --red, --blue, --violet, --teal).
+    const colors = { vehicle: "#2f6b4f", bin: "#a4650f", report: "#b23a2e", signal: "#0e7a6d", recommendation: "#6b4fb8", user: "#2b6cb0", pickup: "#0e7a6d" } as const;
 
     const statics = staticMarkersRef.current;
     const vehicles = vehiclesRef.current;
@@ -217,15 +217,15 @@ export function BengaluruMap({ markers, route = [], vehiclePaths, geometrySource
       const existing = statics.get(marker.id);
       if (existing) {
         existing.setLatLng([marker.location.lat, marker.location.lng]);
-        existing.setStyle({ fillColor: overflow ? "#f26d5f" : colors[marker.kind], className: overflow ? "overflow-bin" : "" });
+        existing.setStyle({ fillColor: overflow ? "#b23a2e" : colors[marker.kind], className: overflow ? "overflow-bin" : "" });
         existing.bindPopup(popupText);
         return;
       }
       statics.set(marker.id, L.circleMarker([marker.location.lat, marker.location.lng], {
         radius: marker.kind === "recommendation" ? 7 : 6,
-        color: "#fff",
+        color: "#fffdf7",
         weight: 3,
-        fillColor: overflow ? "#f26d5f" : colors[marker.kind],
+        fillColor: overflow ? "#b23a2e" : colors[marker.kind],
         fillOpacity: 1,
         className: overflow ? "overflow-bin" : undefined,
       }).bindPopup(popupText).addTo(staticLayer));

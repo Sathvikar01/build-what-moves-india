@@ -1,58 +1,62 @@
 /* ============================================================================
-   COMMAND ATLAS — design tokens
-   Forest-ink chrome, signal-lime accent. Every color, curve, and duration in
-   the product resolves from here. No component CSS may hardcode raw values.
+   CIVIC FIELD GUIDE — design tokens
+   Warm paper surfaces, deep civic-green accent, editorial serif display.
+   Every color, curve, and duration in the product resolves from here.
+   No component CSS may hardcode raw values.
    ========================================================================== */
 
 :root {
-  /* ── Forest ink surface ramp (dark-first) ─────────────────────────────── */
-  --ink-950: #070e0a;
-  --ink-900: #0b1510;
-  --ink-850: #0f1b15;
-  --ink-800: #14231b;
-  --ink-750: #182a20;
-  --ink-700: #1e3327;
-  --ink-600: #284333;
+  /* ── Paper surface ramp (light-first) ─────────────────────────────────── */
+  --paper: #f5f2ea;
+  --paper-2: #ede8db;
+  --card: #fffdf7;
+  --card-2: #faf7ee;
+  --card-3: #f2eee2;
+  --well: #e8e3d4;
+  --edge: #cfc8b2;
 
-  --line: rgba(213, 236, 221, 0.09);
-  --line-strong: rgba(213, 236, 221, 0.17);
-  --line-lime: rgba(201, 242, 77, 0.28);
+  /* ── Lines ─────────────────────────────────────────────────────────────── */
+  --line: rgba(29, 42, 34, 0.12);
+  --line-strong: rgba(29, 42, 34, 0.22);
+  --line-accent: rgba(47, 107, 79, 0.35);
 
-  --text-hi: #eaf3eb;
-  --text-mid: #a2b8aa;
-  --text-lo: #6b8074;
-  --text-on-accent: #17210a;
+  /* ── Ink (text) ────────────────────────────────────────────────────────── */
+  --ink: #1d2a22;
+  --ink-mid: #4f6055;
+  --ink-lo: #75837a;
+  --on-accent: #f7f4ec;
 
-  /* ── Signal lime (the one accent that means "live / act now") ─────────── */
-  --lime: #c9f24d;
-  --lime-bright: #e0ff70;
-  --lime-soft: rgba(201, 242, 77, 0.12);
-  --lime-edge: rgba(201, 242, 77, 0.38);
+  /* ── Civic green — the one accent that means "live / act now" ──────────── */
+  --accent: #2f6b4f;
+  --accent-bright: #3d8261;
+  --accent-deep: #235239;
+  --accent-soft: rgba(47, 107, 79, 0.1);
+  --accent-edge: rgba(47, 107, 79, 0.38);
 
-  /* ── Semantic states ───────────────────────────────────────────────────── */
-  --amber: #f0a83c;
-  --amber-soft: rgba(240, 168, 60, 0.13);
-  --red: #f26d5f;
-  --red-soft: rgba(242, 109, 95, 0.13);
-  --teal: #45d9c3;
-  --teal-soft: rgba(69, 217, 195, 0.12);
-  --violet: #b795ff;
-  --violet-soft: rgba(183, 149, 255, 0.12);
-  --blue: #74b9ff;
-  --blue-soft: rgba(116, 185, 255, 0.13);
-  --focus: #8ecbff;
+  /* ── Semantic states (retuned for light ground) ────────────────────────── */
+  --amber: #a4650f;
+  --amber-soft: rgba(164, 101, 15, 0.12);
+  --red: #b23a2e;
+  --red-soft: rgba(178, 58, 46, 0.1);
+  --teal: #0e7a6d;
+  --teal-soft: rgba(14, 122, 109, 0.1);
+  --violet: #6b4fb8;
+  --violet-soft: rgba(107, 79, 184, 0.1);
+  --blue: #2b6cb0;
+  --blue-soft: rgba(43, 108, 176, 0.1);
+  --focus: #2b6cb0;
 
-  /* ── Materials (Apple-style translucent layers over the map) ──────────── */
-  --glass-bg: rgba(9, 18, 13, 0.6);
-  --glass-bg-strong: rgba(9, 18, 13, 0.78);
-  --glass-blur: blur(20px) saturate(160%);
-  --glass-edge: rgba(234, 243, 235, 0.09);
-  --glass-edge-hi: rgba(234, 243, 235, 0.18);
+  /* ── Materials (translucent paper layers over the map) ─────────────────── */
+  --glass-bg: rgba(255, 253, 247, 0.86);
+  --glass-bg-strong: rgba(255, 253, 247, 0.95);
+  --glass-blur: blur(18px) saturate(130%);
+  --glass-edge: rgba(29, 42, 34, 0.1);
+  --glass-edge-hi: rgba(29, 42, 34, 0.16);
 
-  /* ── Depth ─────────────────────────────────────────────────────────────── */
-  --shadow-1: 0 1px 2px rgba(2, 6, 4, 0.5), 0 10px 30px rgba(2, 6, 4, 0.38);
-  --shadow-2: 0 2px 8px rgba(2, 6, 4, 0.55), 0 28px 70px rgba(2, 6, 4, 0.55);
-  --shadow-lime: 0 4px 22px rgba(201, 242, 77, 0.22);
+  /* ── Depth (tinted warm shadows, never pure black) ─────────────────────── */
+  --shadow-1: 0 1px 2px rgba(46, 58, 48, 0.06), 0 10px 28px rgba(46, 58, 48, 0.1);
+  --shadow-2: 0 2px 6px rgba(46, 58, 48, 0.07), 0 26px 60px rgba(46, 58, 48, 0.16);
+  --shadow-accent: 0 6px 20px rgba(47, 107, 79, 0.24);
 
   /* ── Motion (emil-design-eng curves; interruptible CSS transitions) ───── */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
@@ -63,10 +67,10 @@
   --t-slow: 280ms;
 
   /* ── Shape & rhythm ────────────────────────────────────────────────────── */
-  --r-sm: 8px;
-  --r-md: 12px;
-  --r-lg: 16px;
-  --r-xl: 22px;
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 20px;
   --r-pill: 999px;
 
   --space-1: 4px;
@@ -84,8 +88,8 @@
 
 @media (prefers-reduced-transparency: reduce) {
   :root {
-    --glass-bg: rgba(9, 18, 13, 0.96);
-    --glass-bg-strong: #0b1510;
+    --glass-bg: rgba(255, 253, 247, 0.98);
+    --glass-bg-strong: #fffdf7;
     --glass-blur: none;
   }
 }
