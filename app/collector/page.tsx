@@ -60,57 +60,49 @@ export default function CollectorPage(){
     }catch{setProofStatus("error")}
   }
 
-  if(!ready) return <div className="page"><p>Loading…</p></div>;
+  if(!ready) return <div className="page-wrap"><p>Loading…</p></div>;
 
-  return <div>
-    <section>
-      <p>{copy.shift} · {vehicle.label}</p>
-      <strong>{copy.next} {next?next.locality:copy.complete}</strong>
-      <p>{collected}/{route?.stops.length??0} {copy.collected} · v{state.route.version}{trip?` · ${trip.totalKm} km round trip`:''}</p>
+  return <div className="atlas-split" lang={locale==="kn"?"kn":"en"}>
+    <section className="atlas-map">
+      <BengaluruMap markers={markers} vehiclePaths={state.route.roadPathByVehicle} userLocation={state.userLocation?.location??MOCK_USER_LOCATION} height="100%"/>
     </section>
-    <section>
-      <h2>Assigned route map</h2>
-      <BengaluruMap markers={markers} vehiclePaths={state.route.roadPathByVehicle} userLocation={state.userLocation?.location??MOCK_USER_LOCATION} height={420}/>
-    </section>
-    <aside>
-      <div>
-        <strong>{copy.route} v{state.route.version} · {state.route.status}</strong>
-        <p>{state.route.trigger.replaceAll("_"," ")}. {copy.revisionNote}</p>
-        <button data-testid="collector-acknowledge" onClick={()=>setAcknowledged(true)} disabled={acknowledged||busy}>{acknowledged?copy.acknowledged:copy.acknowledge}</button>
+    <aside className="atlas-rail">
+      <section className="rail-hero">
+        <p className="eyebrow">{copy.shift} · {vehicle.label}</p>
+        <h1>{next?`${copy.next} ${next.locality}`:copy.complete}</h1>
+        <p>{next?.label??copy.allDone}</p>
+        <div style={{display:"flex",alignItems:"center",gap:"var(--space-3)",padding:"var(--space-3)",borderRadius:"var(--r-md)",background:"var(--accent-soft)",border:"1px solid var(--accent-edge)"}}><strong style={{fontSize:"1.2rem",fontFamily:"var(--font-display)",color:"var(--accent)"}}>{collected}/{route?.stops.length??0}</strong><span style={{fontSize:"0.78rem",color:"var(--ink-mid)"}}>{copy.collected}</span></div>
+      </section>
+      <div className="revision-banner panel">
+        <div><strong>{copy.route} v{state.route.version} · {state.route.status}</strong><p>{state.route.trigger.replaceAll("_"," ")}. {copy.revisionNote}</p></div>
+        <button data-testid="collector-acknowledge" type="button" onClick={()=>setAcknowledged(true)} disabled={acknowledged||busy}>{acknowledged?copy.acknowledged:copy.acknowledge}</button>
       </div>
       <Toast notice={notice} onDone={()=>setNotice(undefined)}/>
-      {next&&<section>
-        <div>
-          <span>{next.sequence}</span>
-          <h2>{next.label}</h2>
-          <em>{next.etaMinutes} {copy.minutes}</em>
-        </div>
-        <p>{next.locality} · {next.volumeLitres.toFixed(0)} {copy.expected} · {next.distanceKm} {copy.estimated}</p>
-        <div>
-          <strong>{copy.why}</strong>
-          <p>{next.explanation}</p>
-        </div>
-        <div>
-          {next.status!=="arrived"&&<button data-testid="collector-arrive" disabled={busy} onClick={()=>act("arrived")}>{copy.arrive}</button>}
-          {next.status==="arrived"&&<button data-testid="collector-collect" disabled={busy} onClick={()=>{act("collected");setProofOpen(true);setBefore(undefined);setAfter(undefined);setGps(undefined);setChecked(false);setProofStatus("")}}>{copy.collect}</button>}
-          <button disabled={busy} onClick={()=>act("blocked")}>{copy.blocked}</button>
+      {next&&<section className="panel next-stop-card">
+        <div className="section-heading"><p className="eyebrow">{copy.stop} {next.sequence} · ETA {next.etaMinutes} {copy.minutes}</p><h2 className="title">{next.label}</h2></div>
+        <div className="stop-facts"><span>{next.locality}</span><span>{next.volumeLitres.toFixed(0)} {copy.expected}</span><span>{next.distanceKm} km {copy.estimated}</span></div>
+        <div><strong>{copy.why}</strong><p>{next.explanation}</p></div>
+        <div style={{display:"flex",gap:"var(--space-2)",flexWrap:"wrap"}}>
+          {next.status!=="arrived"&&<button className="landing-button landing-button-primary" data-testid="collector-arrive" disabled={busy} onClick={()=>act("arrived")}>{copy.arrive}</button>}
+          {next.status==="arrived"&&<button className="landing-button landing-button-primary" data-testid="collector-collect" disabled={busy} onClick={()=>{act("collected");setProofOpen(true);setBefore(undefined);setAfter(undefined);setGps(undefined);setChecked(false);setProofStatus("")}}>{copy.collect}</button>}
+          <button className="landing-button landing-button-secondary" disabled={busy} onClick={()=>act("blocked")}>{copy.blocked}</button>
         </div>
       </section>}
-      {proofOpen&&next&&<section>
+      {proofOpen&&next&&<section className="panel proof-panel">
         <h2>{copy.proofTitle}</h2>
-        <div>
+        <div className="proof-grid">
           <label>{copy.before}<input type="file" accept="image/jpeg,image/png,image/webp" onChange={e=>void choose(e.target.files?.[0],setBefore)}/></label>
           <label>{copy.after}<input type="file" accept="image/jpeg,image/png,image/webp" onChange={e=>void choose(e.target.files?.[0],setAfter)}/></label>
-          <button type="button" onClick={()=>{const fallback=()=>setGps({coords:next.location??vehicle.location,mode:"demo"});if(!navigator.geolocation){fallback();return}navigator.geolocation.getCurrentPosition(position=>setGps({coords:{lat:position.coords.latitude,lng:position.coords.longitude},mode:"captured"}),fallback,{enableHighAccuracy:true,timeout:5000,maximumAge:0})}}>{gps?.mode==="captured"?`Captured · ${gps.coords.lat.toFixed(4)}, ${gps.coords.lng.toFixed(4)}`:gps?.mode==="demo"?"Demo stop coordinate · permission unavailable":copy.capture}</button>
         </div>
-        <label><input type="checkbox" checked={checked} onChange={e=>setChecked(e.target.checked)}/>{copy.checklist}</label>
-        <button data-testid="collector-submit-proof" type="button" disabled={!before||!after||!gps||!checked||proofStatus==="uploading"||busy} onClick={()=>void submitProof()}>{proofStatus==="uploading"?copy.storing:copy.submitProof}</button>
+        <button type="button" onClick={()=>{const fallback=()=>setGps({coords:next.location??vehicle.location,mode:"demo"});if(!navigator.geolocation){fallback();return}navigator.geolocation.getCurrentPosition(position=>setGps({coords:{lat:position.coords.latitude,lng:position.coords.longitude},mode:"captured"}),fallback,{enableHighAccuracy:true,timeout:5000,maximumAge:0})}}>{gps?.mode==="captured"?`Captured · ${gps.coords.lat.toFixed(4)}, ${gps.coords.lng.toFixed(4)}`:gps?.mode==="demo"?"Demo stop coordinate · permission unavailable":copy.capture}</button>
+        <label className="proof-check"><input type="checkbox" checked={checked} onChange={e=>setChecked(e.target.checked)}/>{copy.checklist}</label>
+        <button className="landing-button landing-button-primary" data-testid="collector-submit-proof" type="button" disabled={!before||!after||!gps||!checked||proofStatus==="uploading"||busy} onClick={()=>void submitProof()}>{proofStatus==="uploading"?copy.storing:copy.submitProof}</button>
       </section>}
-      <section>
-        <h2>{copy.stopsTitle}</h2>
-        <ol>
+      <section className="manifest-panel">
+        <h2 className="eyebrow">{copy.stopsTitle}</h2>
+        <ol className="stop-list">
           {route?.stops.map(stop=>(
-            <li key={stop.id}>
+            <li key={stop.id} className={next&&stop.id===next.id?"stop-now":""}>
               <span>{stop.sequence}</span>
               <div><strong>{stop.label}</strong> · {stop.locality} · {stop.etaMinutes} {copy.minutes} · {stop.status.replaceAll("_"," ")}{next&&stop.id===next.id?" · NOW":""}</div>
             </li>
