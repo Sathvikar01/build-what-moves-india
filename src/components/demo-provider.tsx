@@ -43,9 +43,9 @@ export function DemoProvider({children}:{children:ReactNode}){
       if(!response.ok){setLastError("Live sync failed. Showing the last known state.");return}
       const body=await response.json() as {data:DemoState;meta?:{cursor?:number}};
       const cursor=body.meta?.cursor??body.data.events.at(-1)?.cursor??null;
-      // The day-cycle engine advances state every second without appending
+      // The scenario engine advances state every second without appending
       // events, so the dedupe key covers the cursor AND the simulation clock.
-      const syncKey=`${cursor??-1}:${body.data.now}:${body.data.dayCycle?.phase??"-"}:${body.data.dayCycle?.progressKm??0}`;
+      const syncKey=`${cursor??-1}:${body.data.now}:${body.data.tick??0}`;
       if(syncKey===appliedSyncKey.current) return;
       appliedSyncKey.current=syncKey;
       setLastError(null);

@@ -1,16 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Camera, CheckCircle2, Clock3, LocateFixed, Navigation, Radio, Trash2, Truck } from "lucide-react";
-import { AtlasShell } from "../../src/components/atlas-shell";
 import { BengaluruMap, type MapMarker } from "../../src/components/bengaluru-map";
+import { tripStatusFor } from "../../src/components/trip-status";
 import { useDemo } from "../../src/components/demo-provider";
 import { useRequireUser } from "../../src/components/auth";
 import { citizenCopy } from "../../src/data/copy";
 import { sanitizeEvidence } from "../../src/client/image";
 import { MOCK_USER_LOCATION } from "../../src/components/bengaluru-map";
-import { tripStatusFor } from "../../src/components/trip-status";
-import { EvidencePair, ReportTracker, SkeletonBlock } from "../../src/components/ui-bits";
+import { EvidencePair, ReportTracker } from "../../src/components/ui-bits";
 
 type Notice={kind:"success"|"error";message:string};
 type Step="signal"|"track"|"verify";
@@ -31,9 +29,7 @@ export default function CitizenPage(){
   useEffect(()=>()=>{if(noticeTimer.current)clearTimeout(noticeTimer.current)},[]);
 
   const nearest=state.vehicles.find(v=>v.status!=="offline");
-  // One source of truth for ETA: the live day-cycle trip projection.
   const trip=tripStatusFor(state);
-  const etaMinutes=trip?trip.etaToNextMinutes:null;
   const markers=useMemo<MapMarker[]>(()=>[
     ...state.vehicles.filter(v=>v.status!=="offline").map(v=>({id:v.id,label:v.label,location:v.location,kind:"vehicle" as const,detail:`${v.status.replaceAll("_"," ")} · synthetic`})),
     ...state.bins.slice(0,5).map(b=>({id:b.id,label:b.label,location:b.location,kind:"bin" as const,detail:`${Math.round(b.fillPercent)}% full`,overflow:b.fillPercent>=100})),
@@ -42,12 +38,6 @@ export default function CitizenPage(){
   const listedBins=state.bins.slice(0,5);
   const myReports=useMemo(()=>state.reports.filter(r=>r.id.startsWith("rep-citizen-")||r.id.startsWith("rep-api-")),[state.reports]);
   const awaiting=state.reports.find(r=>r.status==="cleaned");
-
-  const tabs:{id:Step;label:string}[]=[
-    {id:"signal",label:copy.signalsTitle},
-    {id:"track",label:copy.trackerTitle},
-    {id:"verify",label:copy.activity},
-  ];
 
   function showNotice(next:Notice){
     setNotice(next);
@@ -91,109 +81,85 @@ export default function CitizenPage(){
     }
   }
 
-  if(!ready) return <AtlasShell role="citizen"><div className="page-wrap narrow-wrap"><SkeletonBlock rows={3}/></div></AtlasShell>;
+  if(!ready) return <div className="page"><p>Loading…</p></div>;
 
-  // Report desk: status band on top, then step rail + workbench + map column.
-  return <AtlasShell role="citizen">
-    <div className="desk" lang={locale==="kn"?"kn":"en"}>
-      <section className="desk-band">
-        <div className="desk-id">
-          <p className="eyebrow">Mahadevapura pilot · wards 28–50</p>
-          <h1>{copy.hero}</h1>
-        </div>
-        <div className="desk-eta" aria-live="polite">
-          <span className="eta-truck"><Truck size={24} aria-hidden="true"/></span>
-          <div className="eta-read">
-            <span>ETA · nearest collection</span>
-            <strong>{nearest?(etaMinutes!==null?`${etaMinutes} min`:copy.etaWaiting):copy.etaWaiting}</strong>
-          </div>
-          <small>{etaMinutes!==null?copy.etaLive:"Simulated estimate"}</small>
-        </div>
+  return <div>
+    <nav>
+      <button onClick={()=>setStep("signal")}>{copy.signalsTitle}</button>
+      <button onClick={()=>setStep("track")}>{copy.trackerTitle}</button>
+      <button onClick={()=>setStep("verify")}>{copy.activity}</button>
+    </nav>
+    {notice&&<p role={notice.kind==="error"?"alert":"status"}>{notice.message}</p>}
+
+    {step==="signal"&&<>
+      <section>
+        <h2>What is waiting?</h2>
+        <button data-testid="signal-have-waste" disabled={busy||submitting} onClick={()=>sendSignal("have_waste")}>{copy.haveWaste} — {copy.haveWasteHint}</button>
+        <button data-testid="signal-outside" disabled={busy||submitting} onClick={()=>sendSignal("waste_outside")}>{copy.outside} — {copy.outsideHint}</button>
       </section>
-      {notice&&<div className={notice.kind==="error"?"toast-inline toast-error":"toast-inline"} role={notice.kind==="error"?"alert":"status"}><CheckCircle2 size={18}/>{notice.message}</div>}
-      <div className="desk-body">
-        <nav className="desk-steps" aria-label="Citizen steps" role="tablist">
-          {tabs.map((item,index)=>(
-            <button key={item.id} role="tab" aria-selected={step===item.id} className={step===item.id?"active":""} onClick={()=>setStep(item.id)}>
-              <span className="step-no" aria-hidden="true">{String(index+1).padStart(2,"0")}</span>
-              <span className="step-word">{item.label}</span>
-              {item.id==="verify"&&awaiting&&<span className="dot" aria-hidden="true"/>}
-            </button>
+      <section>
+        <h2>See something? Show the city.</h2>
+        <form onSubmit={submitReport}>
+          <label>
+            {photo?copy.uploadReady:copy.uploadEmpty}
+            <input required type="file" accept="image/jpeg,image/png,image/webp" onChange={async e=>{const file=e.target.files?.[0];if(file){try{setPhoto(await sanitizeEvidence(file))}catch(error){showNotice({kind:"error",message:error instanceof Error?error.message:copy.errors.imagePrepare})}}}}/>
+          </label>
+          <label><span>{copy.title}</span><input name="title" required maxLength={120} placeholder={copy.titlePlaceholder}/></label>
+          <label><span>{copy.category}</span><select name="category" defaultValue="mixed">{Object.entries(copy.categories).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
+          <label><span>{copy.hygiene}</span><select name="hygiene" defaultValue="high">{Object.entries(copy.hygieneLevels).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
+          <label><span>{copy.obstruction}</span><select name="obstruction" defaultValue="partial">{Object.entries(copy.obstructionLevels).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
+          <button type="button" onClick={locate}>{location==="locating"?"Finding your location…":location==="ready"?"Location captured":location==="demo"?"Demo location · Whitefield":location==="denied"?"Permission denied · use labelled demo location":"Capture my location"}</button>
+          <button data-testid="report-submit" type="submit" disabled={submitting}>{submitting?copy.submitPending:copy.submit}</button>
+        </form>
+      </section>
+    </>}
+
+    {step==="track"&&<>
+      <ReportTracker reports={myReports} stepIndexFor={status=>STEP_INDEX[status]??0} reopenedLabel={copy.trackerReopened} currentLabel={copy.stepCurrent} emptyLabel={copy.trackerEmpty} steps={copy.steps}/>
+      <section>
+        <h2>{copy.truck}</h2>
+        {nearest
+          ? <p><strong>{nearest.label}</strong> · {Math.round(nearest.loadLitres/nearest.capacityLitres*100)}% loaded · {trip?`${trip.totalKm} km route · ${trip.servicing?"emptying a stop":"heading to "}${trip.servicing?"":(trip.nextStopLabel??"the next stop")} · ETA ${trip.etaToNextMinutes} min`:"route pending"}</p>
+          : <p role="status">{copy.noVehicle}</p>}
+      </section>
+      <section>
+        <h2>{copy.bins}</h2>
+        {listedBins.length===0&&<p role="status">{copy.noBins}</p>}
+        <ul>
+          {listedBins.map(bin=>(
+            <li key={bin.id}>
+              <strong>{bin.label}</strong> · {bin.locality} · {bin.fillPercent}% ({bin.status==="full"?copy.binFull:bin.status==="offline"?copy.binOffline:bin.status==="filling"?"filling":copy.binSpace})
+            </li>
           ))}
-        </nav>
-        {/* key={step} remounts the panel so the entrance transition replays */}
-        <div key={step} className="desk-panel step-panel" role="tabpanel">
-          {step==="signal"&&<>
-            <section aria-labelledby="quick-title">
-              <div className="section-heading"><h2 className="title" id="quick-title">What is waiting?</h2></div>
-              <div className="signal-rows">
-                <button data-testid="signal-have-waste" className="signal-row" disabled={busy||submitting} onClick={()=>sendSignal("have_waste")}>
-                  <span className="signal-icon"><Trash2/></span>
-                  <span className="signal-copy"><strong>{copy.haveWaste}</strong><small>{copy.haveWasteHint}</small></span>
-                  <span className="signal-go">{copy.sendSignal} <Navigation size={15}/></span>
-                </button>
-                <button data-testid="signal-outside" className="signal-row signal-row-amber" disabled={busy||submitting} onClick={()=>sendSignal("waste_outside")}>
-                  <span className="signal-icon"><Radio/></span>
-                  <span className="signal-copy"><strong>{copy.outside}</strong><small>{copy.outsideHint}</small></span>
-                  <span className="signal-go">{copy.sendSignal} <Navigation size={15}/></span>
-                </button>
-              </div>
-            </section>
-            <section>
-              <div className="section-heading"><h2 className="title">See something? Show the city.</h2></div>
-              <form className="report-form" onSubmit={submitReport}>
-                <label className="upload-drop"><Camera/><strong>{photo?copy.uploadReady:copy.uploadEmpty}</strong><span>{photo?`${Math.round(photo.size/1024)} KB · ${copy.uploadMeta}`:copy.uploadHint}</span><input required type="file" accept="image/jpeg,image/png,image/webp" onChange={async e=>{const file=e.target.files?.[0];if(file){try{setPhoto(await sanitizeEvidence(file))}catch(error){showNotice({kind:"error",message:error instanceof Error?error.message:copy.errors.imagePrepare})}}}}/></label>
-                <label><span>{copy.title}</span><input name="title" required maxLength={120} placeholder={copy.titlePlaceholder}/></label>
-                <div className="form-duo">
-                  <label><span>{copy.category}</span><select name="category" defaultValue="mixed">{Object.entries(copy.categories).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
-                  <label><span>{copy.hygiene}</span><select name="hygiene" defaultValue="high">{Object.entries(copy.hygieneLevels).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
-                </div>
-                <label><span>{copy.obstruction}</span><select name="obstruction" defaultValue="partial">{Object.entries(copy.obstructionLevels).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
-                <button type="button" className="location-button" onClick={locate}><LocateFixed size={18}/>{location==="locating"?"Finding your location…":location==="ready"?"Location captured":location==="demo"?"Demo location · Whitefield":location==="denied"?"Permission denied · use labelled demo location":"Capture my location"}</button>
-                <button data-testid="report-submit" className="primary-button wide-button" type="submit" disabled={submitting}>{submitting?copy.submitPending:copy.submit}{!submitting&&<Navigation size={18}/>}</button>
-              </form>
-            </section>
-          </>}
-          {step==="track"&&<>
-            <ReportTracker reports={myReports} stepIndexFor={status=>STEP_INDEX[status]??0} reopenedLabel={copy.trackerReopened} currentLabel={copy.stepCurrent} emptyLabel={copy.trackerEmpty} steps={copy.steps}/>
-            <section>
-              <div className="section-heading"><h2 className="title">{copy.truck}</h2></div>
-              {nearest
-                ? <div className="truck-card"><span className="truck-avatar"><Truck/></span><div><strong>{nearest.label}</strong><p>Auto-tipper · on the way</p><span><Clock3 size={15}/>{trip?`${trip.totalKm} km trip · ${trip.sub}`:`${etaMinutes??copy.etaWaiting} min`}</span></div><b>{Math.round(nearest.loadLitres/nearest.capacityLitres*100)}% loaded</b></div>
-                : <div className="empty-state" role="status">{copy.noVehicle}</div>}
-            </section>
-            <section>
-              <div className="section-heading"><h2 className="title">{copy.bins}</h2></div>
-              {listedBins.length===0&&<div className="empty-state" role="status">{copy.noBins}</div>}
-              <div className="bin-list">{listedBins.map(bin=>(
-                <div className="bin-row" key={bin.id}>
-                  <span className={`fill-ring fill-${bin.status}`} style={{"--fill":`${Math.round(bin.fillPercent*3.6)}deg`} as React.CSSProperties}><b>{bin.fillPercent}%</b></span>
-                  <div><strong>{bin.label}</strong><p>{bin.locality} · {bin.accepted.join(" + ")}</p><small>{bin.status==="full"?copy.binFull:bin.status==="offline"?copy.binOffline:bin.status==="filling"?`${copy.binSpace} · filling`:copy.binSpace}</small></div>
-                </div>
-              ))}</div>
-            </section>
-          </>}
-          {step==="verify"&&<>
-            {awaiting&&<section className="confirmation-panel">
-              <div><h2 className="title">Was {awaiting.locality} cleaned?</h2><p>Collector proof was accepted. Your confirmation closes the public audit loop.</p></div>
-              <EvidencePair proof={state.proofs.find(p=>p.reportId===awaiting.id&&(p.beforeAssetId||p.afterAssetId))} eyebrow={copy.evidenceEyebrow} beforeLabel={copy.evidenceBefore} afterLabel={copy.evidenceAfter} note={copy.evidenceNote}/>
-              <div className="confirmation-actions">
-                <button data-testid="confirm-cleaned" className="primary-button" disabled={busy} onClick={()=>confirmCleanup("cleaned")}>{copy.cleaned}</button>
-                <button className="secondary-button" disabled={busy} onClick={()=>confirmCleanup("partial")}>{copy.partial}</button>
-                <button className="secondary-button danger-text" disabled={busy} onClick={()=>confirmCleanup("still_present")}>{copy.present}</button>
-              </div>
-            </section>}
-            <section>
-              <div className="section-heading"><h2 className="title">{copy.activity}</h2></div>
-              {state.events.length===0&&<div className="empty-state" role="status">{copy.noEvents}</div>}
-              <ol className="timeline">{state.events.slice(-6).reverse().map(event=>(<li key={event.id}><span/><div><strong>{event.message}</strong><small>{new Date(event.occurredAt).toLocaleString(copy.localeTag)} · audit cursor {event.cursor}</small></div></li>))}</ol>
-            </section>
-          </>}
+        </ul>
+      </section>
+    </>}
+
+    {step==="verify"&&<>
+      {awaiting&&<section>
+        <h2>Was {awaiting.locality} cleaned?</h2>
+        <p>Collector proof was accepted. Your confirmation closes the public audit loop.</p>
+        <EvidencePair proof={state.proofs.find(p=>p.reportId===awaiting.id&&(p.beforeAssetId||p.afterAssetId))} eyebrow={copy.evidenceEyebrow} beforeLabel={copy.evidenceBefore} afterLabel={copy.evidenceAfter} note={copy.evidenceNote}/>
+        <div>
+          <button data-testid="confirm-cleaned" disabled={busy} onClick={()=>confirmCleanup("cleaned")}>{copy.cleaned}</button>
+          <button disabled={busy} onClick={()=>confirmCleanup("partial")}>{copy.partial}</button>
+          <button disabled={busy} onClick={()=>confirmCleanup("still_present")}>{copy.present}</button>
         </div>
-        <section className="desk-map" aria-label="Ward map">
-          <BengaluruMap markers={markers} route={state.route.roadPath} vehiclePaths={state.route.roadPathByVehicle} geometrySource={state.route.roadGeometrySource} tripStatus={trip} userLocation={state.userLocation?.location??MOCK_USER_LOCATION} height="100%"/>
-        </section>
-      </div>
-    </div>
-  </AtlasShell>;
+      </section>}
+      <section>
+        <h2>{copy.activity}</h2>
+        {state.events.length===0&&<p role="status">{copy.noEvents}</p>}
+        <ol>
+          {state.events.slice(-6).reverse().map(event=>(
+            <li key={event.id}><strong>{event.message}</strong> · {new Date(event.occurredAt).toLocaleString(copy.localeTag)} · audit cursor {event.cursor}</li>
+          ))}
+        </ol>
+      </section>
+    </>}
+
+    <section>
+      <h2>Ward map</h2>
+      <BengaluruMap markers={markers} vehiclePaths={state.route.roadPathByVehicle} userLocation={state.userLocation?.location??MOCK_USER_LOCATION} height={420}/>
+    </section>
+  </div>;
 }

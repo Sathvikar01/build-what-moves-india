@@ -48,14 +48,14 @@ export interface RoutePlan {
   algorithm: "multi-signal-aco-inspired-v1"; seed: number; trigger: string; generatedAt: string;
   weights: AdaptiveWeights; routes: VehicleRoute[]; unassigned: { id: string; reason: string }[];
   totalDistanceKm: number; totalMinutes: number; fallbackUsed: boolean; distanceMode: "haversine_road_estimate" | "precomputed_osrm";
-  // A* street-grid geometry for the ACO-chosen stop sequences: the blue line
+  // A* real-road geometry for the ACO-chosen stop sequences: the blue line
   // the maps animate trucks along. Each path is a full trip — it starts at the
   // vehicle's current location, threads the ACO-ordered stops, and returns to
   // the origin. `roadPath` follows the first route with stops.
   roadPath: GeoPoint[]; roadDistanceKm: number;
   roadPathByVehicle: { vehicleId: string; path: GeoPoint[]; distanceKm: number; stopDistancesKm: number[]; stopPoints: GeoPoint[] }[];
   // Which router produced the geometry: real OSM streets via Overpass, or the
-  // labelled synthetic street grid (fallback when Overpass is unreachable).
+  // labelled synthetic street grid (fallback when the snapshot is unusable).
   roadGeometrySource: "osm_overpass" | "synthetic_grid";
 }
 
@@ -86,6 +86,8 @@ export interface UserLocation {
   source: SourceMeta;
 }
 
+// Server day-cycle engine: the truck drives the real-road trip over a
+// simulated day (drive → service each stop → return to depot → next day).
 export interface DayCycle {
   day: number;
   phase: "en_route" | "servicing" | "at_depot";

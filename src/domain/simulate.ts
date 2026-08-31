@@ -1,5 +1,5 @@
 import { calculatePriority } from "./priority";
-import type { DemoEvent, DemoState, GarbageReport, GeoPoint, SmartBin, Vehicle, WasteDump } from "./types";
+import type { DemoEvent, DemoState, GarbageReport, GeoPoint, SmartBin, WasteDump } from "./types";
 
 // Single source of truth for the demo simulation rules shared by the client
 // provider and the server store. Previously these rules were duplicated (and
@@ -105,23 +105,6 @@ function clampRound6(value: number, min: number, max: number) {
   return Math.round(Math.min(max, Math.max(min, value)) * 1e6) / 1e6;
 }
 
-export function advanceVehicles(vehicles: Vehicle[], state: DemoState, now: string): Vehicle[] {
-  return vehicles.map((vehicle, index) => {
-    if (vehicle.status === "offline") return vehicle;
-    const route = state.route.routes.find(r => r.vehicleId === vehicle.id);
-    const target = route?.stops.find(s => s.status !== "collected")?.location;
-    const step = 0.13;
-    return {
-      ...vehicle,
-      location: target
-        ? { lat: vehicle.location.lat + (target.lat - vehicle.location.lat) * step, lng: vehicle.location.lng + (target.lng - vehicle.location.lng) * step }
-        : vehicle.location,
-      lastSeenAt: now,
-      heading: (vehicle.heading + 7 + index) % 360,
-    };
-  });
-}
-
 let localEventSeq = 0;
 export function nextLocalEventId() {
   return `evt-local-${++localEventSeq}`;
@@ -174,7 +157,6 @@ export function applyTick(state: DemoState, seconds: number): DemoState {
     ...state,
     tick,
     now,
-    vehicles: advanceVehicles(state.vehicles, state, now),
     bins: advanceBins(state.bins, tick, now),
     lastAction: `Live telemetry advanced ${seconds} seconds`,
   };

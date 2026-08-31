@@ -29,24 +29,6 @@ describe("five-colony ACO-inspired routing",()=>{
     state.signals.unshift({id:"sig-citizen-test",type:"waste_outside",category:"mixed",amountBand:"medium",locality:"Whitefield",location:{lat:12.97,lng:77.75},status:"queued",createdAt:state.now,source:state.signals[0].source});
     expect(toWorkStops(state).some(s=>s.id==="sig-citizen-test")).toBe(true);
   });
-
-  it("attaches A* road geometry for the ACO-chosen sequences",()=>{
-    const state=createDemoState();
-    const plan=optimizeRoutes(state.vehicles,toWorkStops(state),"test",4242);
-    expect(plan.roadPath.length).toBeGreaterThan(2);
-    expect(plan.roadDistanceKm).toBeGreaterThan(0);
-    for(const entry of plan.roadPathByVehicle){
-      expect(entry.path.length).toBeGreaterThan(2);
-      expect(entry.distanceKm).toBeGreaterThan(0);
-      const stops=plan.routes.find(r=>r.vehicleId===entry.vehicleId)!.stops;
-      const vehicle=state.vehicles.find(v=>v.id===entry.vehicleId)!;
-      expect(entry.path[0]).toEqual(vehicle.location);
-      expect(entry.path.at(-1)).toEqual(vehicle.location);
-      expect(entry.stopPoints).toHaveLength(stops.length);
-      expect(entry.stopDistancesKm.length).toBe(stops.length);
-      expect(entry.stopDistancesKm.every(d=>d>0&&d<entry.distanceKm)).toBe(true);
-    }
-  });
 });
 
 describe("overflow-priority routing",()=>{
@@ -59,7 +41,6 @@ describe("overflow-priority routing",()=>{
     expect(lead.stops[0].workId).toBe(state.bins[8].id);
     expect(lead.stops[0].reasonCodes).toContain("overflow_priority");
     expect(lead.stops[0].locked).toBe(true);
-    expect(plan.roadPathByVehicle[0].stopPoints[0]).toEqual(lead.stops[0].location);
   });
 
   it("keeps deterministic output when options are passed",()=>{

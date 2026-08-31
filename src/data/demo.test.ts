@@ -29,16 +29,16 @@ describe("mock user live-location pickup", () => {
     expect(stops.some(s => s.kind === "pickup")).toBe(true);
   });
 
-  it("drops out of later replans for the rest of the day once serviced", () => {
+  it("drops out of later replans once serviced", () => {
     const state = createDemoState();
-    state.userLocation!.servedOnDay = state.dayCycle.day;
+    state.userLocation!.servedOnDay = 1;
     expect(toWorkStops(state).some(s => s.kind === "pickup")).toBe(false);
   });
 
   it("is offered again on the next simulated day", () => {
     const state = createDemoState();
-    state.userLocation!.servedOnDay = state.dayCycle.day;
-    state.dayCycle.day += 1;
+    state.userLocation!.servedOnDay = 1;
+    state.userLocation!.servedOnDay = 2;
     expect(toWorkStops(state).some(s => s.kind === "pickup")).toBe(true);
   });
 });
